@@ -327,6 +327,11 @@ body {
 }
 
 /* --- Upload Box --- */
+.upload-group {
+  display: flex;
+  flex-direction: column;
+}
+
 .upload-box {
   border: 2px dashed var(--border-color);
   border-radius: var(--radius);
@@ -337,6 +342,16 @@ body {
 }
 
 .upload-box:hover {
+  border-color: var(--primary-green);
+  background-color: var(--green-light);
+}
+
+.upload-group.error .upload-box {
+  border-color: #dc2626;
+  background-color: #fef2f2;
+}
+
+.upload-box.file-selected {
   border-color: var(--primary-green);
   background-color: var(--green-light);
 }
@@ -367,6 +382,16 @@ body {
   font-size: 0.8rem;
   color: var(--text-light);
   margin: 0;
+  word-break: break-word;
+}
+
+.file-name {
+  color: var(--primary-green);
+  font-weight: 600;
+}
+
+.success-text {
+  color: var(--primary-green);
 }
 
 /* --- Declaration --- */
@@ -534,6 +559,20 @@ body {
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+.d-block {
+  display: block;
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
   }
 }
 

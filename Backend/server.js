@@ -1,6 +1,7 @@
 import express from "express";
 import authRoutes from "./routes/auth.routes.js";
 import volunteerRoutes from "./routes/volunteer.route.js";
+import ngoRoutes from "./routes/ngo.route.js";
 
 import dotenv from "dotenv";
 import cors from "cors";
@@ -22,6 +23,7 @@ app.use(cors({
 
 app.use("/api", authRoutes);
 app.use("/api/volunteer", volunteerRoutes);
+app.use("/api/ngo", ngoRoutes);
 
 const PORT = process.env.PORT || 5000;
 

@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import './addNgo.css'; // Make sure to import the CSS file
+import React, { useState, useRef } from 'react';
+import './addNgo.css'; 
 import {
   Building2,
   MapPin,
@@ -12,12 +12,24 @@ import {
   Info,
   Facebook,
   Instagram,
-  FileText
+  FileText,
+  Loader2, // Added for loading state
 } from 'lucide-react';
 
-// --- REUSABLE COMPONENTS (Moved outside to prevent focus loss) ---
+// --- REUSABLE COMPONENTS ---
 
-const InputField = ({ label, name, type = "text", placeholder, required = false, value, onChange, error }) => (
+const InputField = ({
+  label,
+  name,
+  type = "text",
+  placeholder,
+  required = false,
+  value,
+  onChange,
+  error,
+  maxLength,
+  ...rest
+}) => (
   <div className="form-group">
     <label className="form-label">
       {label} {required && <span className="required-star">*</span>}
@@ -28,7 +40,9 @@ const InputField = ({ label, name, type = "text", placeholder, required = false,
       value={value}
       onChange={onChange}
       placeholder={placeholder}
+      maxLength={maxLength}
       className={`form-input ${error ? 'error' : ''}`}
+      {...rest}
     />
     {error && <span className="error-msg">{error}</span>}
   </div>
@@ -55,21 +69,69 @@ const SelectField = ({ label, name, options, required = false, value, onChange, 
   </div>
 );
 
-const FileUploadBox = ({ title, optional }) => (
-  <div className="upload-box">
-    <div className="upload-icon-wrapper">
-      <UploadCloud size={24} />
+// Enhanced File Upload Component
+const FileUploadBox = ({ title, name, optional = false, required = false, onFileSelect, selectedFile, error }) => {
+  const fileInputRef = useRef(null);
+
+  const handleDivClick = () => {
+    fileInputRef.current.click();
+  };
+
+  const handleFileChange = (e) => {
+    if (e.target.files && e.target.files[0]) {
+      onFileSelect(name, e.target.files[0]);
+    }
+  };
+
+  return (
+    <div className={`upload-group ${error ? 'error' : ''}`}>
+       {/* Hidden Input */}
+       <input 
+          type="file" 
+          ref={fileInputRef} 
+          style={{ display: 'none' }} 
+          onChange={handleFileChange}
+          accept=".pdf,.jpg,.jpeg,.png"
+       />
+
+       {/* Visual Box */}
+       <div 
+          className={`upload-box ${selectedFile ? 'file-selected' : ''}`} 
+          onClick={handleDivClick}
+        >
+        <div className="upload-icon-wrapper">
+          {selectedFile ? <CheckCircle2 size={24} className="success-text"/> : <UploadCloud size={24} />}
+        </div>
+        <p className="upload-title">
+          {title} {required && <span className="required-star">*</span>}
+        </p>
+        <p className="upload-subtitle">
+          {selectedFile 
+            ? <span className="file-name">{selectedFile.name}</span> 
+            : (optional ? "(Optional) PDF/JPG" : "Click to upload PDF/JPG")
+          }
+        </p>
+      </div>
+      {error && <span className="error-msg">{error}</span>}
     </div>
-    <p className="upload-title">{title}</p>
-    <p className="upload-subtitle">{optional ? "(Optional)" : "Drag & drop or click to upload PDF/JPG"}</p>
-  </div>
-);
+  );
+};
+
+// --- MAIN PAGE COMPONENT ---
 
 const AddNGOPage = () => {
+  const CURRENT_YEAR = new Date().getFullYear();
+  const MIN_EST_YEAR = 1800;
+
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isLoading, setIsLoading] = useState(false); // New Loading State
+  const [apiError, setApiError] = useState(''); // New API Error State
   const [errors, setErrors] = useState({});
+  
+  // State for Form Data
   const [formData, setFormData] = useState({
+    // Step 1
     ngoName: '',
     regType: '',
     regNumber: '',
@@ -77,34 +139,67 @@ const AddNGOPage = () => {
     darpanId: '',
     panNumber: '',
     description: '',
+    // Step 2
     state: '',
     district: '',
     city: '',
     address: '',
     pincode: '',
+    // Step 3
     contactName: '',
     contactRole: '',
     phone: '',
     whatsapp: '',
     email: '',
     website: '',
+    facebook: '',
+    instagram: '',
+    // Step 4
     services: [],
     otherService: '',
+    // Step 5 (Files)
+    registrationCertificate: null,
+    ngoLogo: null,
+    certificate12A: null,
+    certificate80G: null,
     agreeToTerms: false
   });
 
   const totalSteps = 5;
 
+  // --- HANDLERS ---
+
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
+    let nextValue = type === 'checkbox' ? checked : value;
+
+    if (name === "estYear") {
+      // Keep year input strict: numeric-only and max 4 digits.
+      nextValue = String(value).replace(/\D/g, "").slice(0, 4);
+    }
+
+    if (name === "phone" || name === "whatsapp") {
+      // Keep contact numbers numeric-only and max 10 digits.
+      nextValue = String(value).replace(/\D/g, "").slice(0, 10);
+    }
+
+    if (name === "panNumber") {
+      // PAN should be uppercase alphanumeric only.
+      nextValue = String(value).replace(/[^a-zA-Z0-9]/g, "").toUpperCase().slice(0, 10);
+    }
+
     setFormData(prev => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : value
+      [name]: nextValue
     }));
-    // Clear error when user types
-    if (errors[name]) {
-      setErrors(prev => ({ ...prev, [name]: '' }));
-    }
+    if (errors[name]) setErrors(prev => ({ ...prev, [name]: '' }));
+    if (apiError) setApiError(''); // Clear global error on change
+  };
+
+  const handleFileSelect = (name, file) => {
+    setFormData(prev => ({ ...prev, [name]: file }));
+    if (errors[name]) setErrors(prev => ({ ...prev, [name]: '' }));
+    if (apiError) setApiError('');
   };
 
   const handleServiceToggle = (service) => {
@@ -114,11 +209,10 @@ const AddNGOPage = () => {
         : [...prev.services, service];
       return { ...prev, services };
     });
-    // Clear error when user selects a service
-    if (errors.services) {
-      setErrors(prev => ({ ...prev, services: '' }));
-    }
+    if (errors.services) setErrors(prev => ({ ...prev, services: '' }));
   };
+
+  // --- VALIDATION ---
 
   const validateStep = (step) => {
     const newErrors = {};
@@ -127,6 +221,16 @@ const AddNGOPage = () => {
       if (!formData.ngoName.trim()) newErrors.ngoName = "NGO Name is required";
       if (!formData.regType) newErrors.regType = "Registration Type is required";
       if (!formData.regNumber.trim()) newErrors.regNumber = "Registration Number is required";
+      if (formData.estYear) {
+        if (!/^\d{4}$/.test(formData.estYear)) {
+          newErrors.estYear = "Year must be a 4-digit number";
+        } else {
+          const year = Number(formData.estYear);
+          if (year < MIN_EST_YEAR || year > CURRENT_YEAR) {
+            newErrors.estYear = `Year must be between ${MIN_EST_YEAR} and ${CURRENT_YEAR}`;
+          }
+        }
+      }
     }
 
     if (step === 2) {
@@ -141,24 +245,38 @@ const AddNGOPage = () => {
 
     if (step === 3) {
       if (!formData.contactName.trim()) newErrors.contactName = "Contact Name is required";
+      if (!formData.contactRole.trim()) newErrors.contactRole = "Role / Designation is required";
+      
       if (!formData.phone.trim()) {
         newErrors.phone = "Phone Number is required";
       } else if (!/^\d{10}$/.test(formData.phone.replace(/[^0-9]/g, ""))) {
-        newErrors.phone = "Invalid 10-digit number";
+        newErrors.phone = "Enter valid 10-digit number";
+      }
+
+      if (!formData.whatsapp.trim()) {
+        newErrors.whatsapp = "WhatsApp Number is required";
+      } else if (!/^\d{10}$/.test(formData.whatsapp.replace(/[^0-9]/g, ""))) {
+        newErrors.whatsapp = "Enter valid 10-digit number";
       }
 
       if (!formData.email.trim()) {
         newErrors.email = "Email is required";
-      } else if (!/^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/.test(formData.email)) {
+      } else if (!/^[\w.-]+@([\w-]+\.)+[\w-]{2,4}$/.test(formData.email)) {
         newErrors.email = "Invalid email address";
       }
     }
 
     if (step === 4) {
-      if (formData.services.length === 0) newErrors.services = "Select at least one service";
+      if (formData.services.length === 0 && !formData.otherService.trim()) {
+        newErrors.services = "Select at least one service or specify 'Other'";
+      }
     }
 
     if (step === 5) {
+      if (!formData.registrationCertificate) newErrors.registrationCertificate = "Registration Certificate is required";
+      if (!formData.ngoLogo) newErrors.ngoLogo = "NGO Logo is required";
+      if (!formData.certificate12A) newErrors.certificate12A = "12A Certificate is required";
+      if (!formData.certificate80G) newErrors.certificate80G = "80G Certificate is required";
       if (!formData.agreeToTerms) newErrors.agreeToTerms = "You must agree to the terms";
     }
 
@@ -171,11 +289,8 @@ const AddNGOPage = () => {
       setCurrentStep(prev => Math.min(prev + 1, totalSteps));
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } else {
-      // Errors are set by validateStep, UI will show them
       const firstError = document.querySelector('.error-msg');
-      if (firstError) {
-        firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }
+      if (firstError) firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
   };
 
@@ -184,10 +299,71 @@ const AddNGOPage = () => {
     window.scrollTo(0, 0);
   };
 
-  const handleSubmit = () => {
+  // --- API SUBMISSION ---
+
+  const handleSubmit = async () => {
     if (validateStep(5)) {
-      // Simulate API call
-      setTimeout(() => setIsSubmitted(true), 1500);
+      setIsLoading(true);
+      setApiError('');
+
+      // 1. Create FormData object
+      const dataToSend = new FormData();
+      
+      // 2. Append standard text fields
+      Object.keys(formData).forEach(key => {
+        // Exclude files and array initially
+        const excludeList = ['services', 'registrationCertificate', 'ngoLogo', 'certificate12A', 'certificate80G'];
+        
+        if (!excludeList.includes(key)) {
+           // Ensure we don't send null/undefined as strings
+           if (formData[key] !== null && formData[key] !== undefined) {
+             dataToSend.append(key, formData[key]);
+           }
+        }
+      });
+
+      // 3. Append Services (as stringified JSON)
+      dataToSend.append('services', JSON.stringify(formData.services));
+
+      // 4. Append Files (Only if they exist)
+      if (formData.registrationCertificate) {
+        dataToSend.append('registrationCertificate', formData.registrationCertificate);
+      }
+      if (formData.ngoLogo) {
+        dataToSend.append('ngoLogo', formData.ngoLogo);
+      }
+      if (formData.certificate12A) {
+        dataToSend.append('certificate12A', formData.certificate12A);
+      }
+      if (formData.certificate80G) {
+        dataToSend.append('certificate80G', formData.certificate80G);
+      }
+
+      // Debug: Log entries to console
+      // for (var pair of dataToSend.entries()) {
+      //     console.log(pair[0]+ ', ' + pair[1]); 
+      // }
+
+      try {
+        const response = await fetch("http://localhost:5000/api/ngo/create", {
+          method: "POST",
+          body: dataToSend,
+          credentials: "include"
+        });
+
+        const result = await response.json().catch(() => ({}));
+
+        if (!response.ok || !result.success) {
+          throw new Error(result.message || "Failed to submit. Please check your connection and try again.");
+        }
+
+        setIsSubmitted(true);
+      } catch (error) {
+        console.error("Error submitting form:", error);
+        setApiError(error.message || "Failed to submit. Please check your connection and try again.");
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
 
@@ -265,12 +441,32 @@ const AddNGOPage = () => {
 
                 <div className="form-grid">
                   <InputField label="Registration Number" name="regNumber" required placeholder="Reg. No." value={formData.regNumber} onChange={handleInputChange} error={errors.regNumber} />
-                  <InputField label="Year of Est." name="estYear" type="number" placeholder="YYYY" value={formData.estYear} onChange={handleInputChange} />
+                  <InputField
+                    label="Year of Est."
+                    name="estYear"
+                    type="text"
+                    placeholder="YYYY"
+                    value={formData.estYear}
+                    onChange={handleInputChange}
+                    error={errors.estYear}
+                    maxLength={4}
+                    inputMode="numeric"
+                    pattern="[0-9]{4}"
+                    title={`Enter a year between ${MIN_EST_YEAR} and ${CURRENT_YEAR}`}
+                  />
                 </div>
 
                 <div className="form-grid">
                   <InputField label="NGO Darpan ID" name="darpanId" placeholder="e.g. DL/2021/0000" value={formData.darpanId} onChange={handleInputChange} />
-                  <InputField label="PAN Number" name="panNumber" placeholder="AAAAA0000A" value={formData.panNumber} onChange={handleInputChange} />
+                  <InputField
+                    label="PAN Number"
+                    name="panNumber"
+                    placeholder="AAAAA0000A"
+                    value={formData.panNumber}
+                    onChange={handleInputChange}
+                    maxLength={10}
+                    style={{ textTransform: "uppercase" }}
+                  />
                 </div>
 
                 <div className="form-group">
@@ -295,13 +491,13 @@ const AddNGOPage = () => {
                 </div>
 
                 <div className="form-grid">
-                  <SelectField label="State" name="state" required options={["Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh", "Goa", "Gujarat", "Haryana", "Himachal Pradesh", "Jharkhand", "Karnataka", "Kerala", "Madhya Pradesh", "Maharashtra", "Manipur", "Meghalaya", "Mizoram", "Nagaland", "Odisha", "Punjab", "Rajasthan", "Sikkim", "Tamil Nadu", "Telangana", "Tripura", "Uttar Pradesh", "Uttarakhand", "West Bengal", "Andaman and Nicobar Islands", "Chandigarh", "Dadra and Nagar Haveli", "Daman and Diu", "Delhi", "Lakshadweep", "Puducherry"]} value={formData.state} onChange={handleInputChange} error={errors.state} />
+                  <SelectField label="State" name="state" required options={["Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh", "Goa", "Gujarat", "Haryana", "Himachal Pradesh", "Jharkhand", "Karnataka", "Kerala", "Madhya Pradesh", "Maharashtra", "Manipur", "Meghalaya", "Mizoram", "Nagaland", "Odisha", "Punjab", "Rajasthan", "Sikkim", "Tamil Nadu", "Telangana", "Tripura", "Uttar Pradesh", "Uttarakhand", "West Bengal", "Delhi", "Puducherry"]} value={formData.state} onChange={handleInputChange} error={errors.state} />
                   <InputField label="District" name="district" placeholder="District Name" value={formData.district} onChange={handleInputChange} />
                 </div>
 
                 <div className="form-grid">
                   <InputField label="City / Locality" name="city" required placeholder="e.g. Vasant Kunj" value={formData.city} onChange={handleInputChange} error={errors.city} />
-                  <InputField label="Pincode" name="pincode" type="number" required placeholder="1100XX" value={formData.pincode} onChange={handleInputChange} error={errors.pincode} />
+                  <InputField label="Pincode" name="pincode" type="number" required placeholder="1100XX" value={formData.pincode} onChange={handleInputChange} error={errors.pincode} maxLength={6} />
                 </div>
 
                 <div className="form-group">
@@ -321,12 +517,12 @@ const AddNGOPage = () => {
 
                 <div className="form-grid">
                   <InputField label="Contact Person Name" name="contactName" required placeholder="Full Name" value={formData.contactName} onChange={handleInputChange} error={errors.contactName} />
-                  <InputField label="Role / Designation" name="contactRole" placeholder="e.g. Secretary" value={formData.contactRole} onChange={handleInputChange} />
+                  <InputField label="Role / Designation" name="contactRole" required placeholder="e.g. Secretary" value={formData.contactRole} onChange={handleInputChange} error={errors.contactRole} />
                 </div>
 
                 <div className="form-grid">
-                  <InputField label="Phone Number" name="phone" type="tel" required placeholder="+91 99999 99999" value={formData.phone} onChange={handleInputChange} error={errors.phone} />
-                  <InputField label="WhatsApp Number" name="whatsapp" type="tel" placeholder="+91 99999 99999" value={formData.whatsapp} onChange={handleInputChange} />
+                  <InputField label="Phone Number" name="phone" type="number" required placeholder="Enter 10-digit number" value={formData.phone} onChange={handleInputChange} error={errors.phone} />
+                  <InputField label="WhatsApp Number" name="whatsapp" type="number" required placeholder="Enter 10-digit number" value={formData.whatsapp} onChange={handleInputChange} error={errors.whatsapp} />
                 </div>
 
                 <div className="form-grid">
@@ -339,11 +535,25 @@ const AddNGOPage = () => {
                   <div className="social-grid">
                     <div className="social-input-wrapper">
                       <Facebook className="social-icon" size={16} />
-                      <input type="text" placeholder="Facebook URL" className="form-input social-input" />
+                      <input 
+                        type="text" 
+                        name="facebook" 
+                        value={formData.facebook} 
+                        onChange={handleInputChange} 
+                        placeholder="Facebook URL" 
+                        className="form-input social-input" 
+                      />
                     </div>
                     <div className="social-input-wrapper">
                       <Instagram className="social-icon" size={16} />
-                      <input type="text" placeholder="Instagram URL" className="form-input social-input" />
+                      <input 
+                        type="text" 
+                        name="instagram" 
+                        value={formData.instagram} 
+                        onChange={handleInputChange} 
+                        placeholder="Instagram URL" 
+                        className="form-input social-input" 
+                      />
                     </div>
                   </div>
                 </div>
@@ -378,11 +588,18 @@ const AddNGOPage = () => {
                     </div>
                   ))}
                 </div>
-                {errors.services && <span className="error-msg" style={{ marginTop: '-10px', marginBottom: '20px' }}>{errors.services}</span>}
+                {errors.services && <span className="error-msg" style={{ marginTop: '-10px', marginBottom: '20px', display: 'block' }}>{errors.services}</span>}
 
                 <div className="form-group other-service">
                   <label className="form-label">Other Services (Optional)</label>
-                  <input type="text" className="form-input" placeholder="Specify any other services..." />
+                  <input 
+                    type="text" 
+                    name="otherService" 
+                    value={formData.otherService} 
+                    onChange={handleInputChange} 
+                    className="form-input" 
+                    placeholder="Specify any other services..." 
+                  />
                 </div>
               </div>
             )}
@@ -396,10 +613,38 @@ const AddNGOPage = () => {
                 </div>
 
                 <div className="form-grid">
-                  <FileUploadBox title="Registration Certificate" />
-                  <FileUploadBox title="NGO Logo (High Res)" />
-                  <FileUploadBox title="12A Certificate" optional />
-                  <FileUploadBox title="80G Certificate" optional />
+                  <FileUploadBox 
+                    title="Registration Certificate" 
+                    name="registrationCertificate" 
+                    required
+                    onFileSelect={handleFileSelect} 
+                    selectedFile={formData.registrationCertificate}
+                    error={errors.registrationCertificate}
+                  />
+                  <FileUploadBox 
+                    title="NGO Logo (High Res)" 
+                    name="ngoLogo" 
+                    required
+                    onFileSelect={handleFileSelect} 
+                    selectedFile={formData.ngoLogo}
+                    error={errors.ngoLogo}
+                  />
+                  <FileUploadBox 
+                    title="12A Certificate" 
+                    name="certificate12A" 
+                    required
+                    onFileSelect={handleFileSelect} 
+                    selectedFile={formData.certificate12A}
+                    error={errors.certificate12A}
+                  />
+                  <FileUploadBox 
+                    title="80G Certificate" 
+                    name="certificate80G" 
+                    required
+                    onFileSelect={handleFileSelect} 
+                    selectedFile={formData.certificate80G}
+                    error={errors.certificate80G}
+                  />
                 </div>
 
                 <div className="declaration-box">
@@ -413,10 +658,17 @@ const AddNGOPage = () => {
                     />
                     <span className="checkbox-text">
                       I hereby declare that the information provided above is true. I agree to the <a href="#">Privacy Policy</a> and <a href="#">Terms of Service</a>.
-                      {errors.agreeToTerms && <span className="error-msg">{errors.agreeToTerms}</span>}
+                      {errors.agreeToTerms && <span className="error-msg d-block">{errors.agreeToTerms}</span>}
                     </span>
                   </label>
                 </div>
+              </div>
+            )}
+
+            {/* Global API Error Message */}
+            {apiError && (
+              <div className="api-error-message" style={{ color: 'red', textAlign: 'center', marginBottom: '1rem', background: '#ffebee', padding: '10px', borderRadius: '8px' }}>
+                {apiError}
               </div>
             )}
 
@@ -424,7 +676,7 @@ const AddNGOPage = () => {
             <div className="button-group">
               <button
                 onClick={prevStep}
-                disabled={currentStep === 1}
+                disabled={currentStep === 1 || isLoading}
                 className="btn btn-secondary"
               >
                 <ChevronLeft size={20} /> Back
@@ -438,8 +690,11 @@ const AddNGOPage = () => {
                 <button
                   onClick={handleSubmit}
                   className="btn btn-submit"
+                  disabled={isLoading}
+                  style={{ opacity: isLoading ? 0.7 : 1, cursor: isLoading ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
                 >
-                  Submit for Verification
+                  {isLoading && <Loader2 className="animate-spin" size={20} />}
+                  {isLoading ? 'Submitting...' : 'Submit for Verification'}
                 </button>
               )}
             </div>
