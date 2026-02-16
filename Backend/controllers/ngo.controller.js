@@ -65,6 +65,7 @@ export const createNgo = async (req, res) => {
     const documents = {
       registrationCertificate: getUploadedFileName(req.files, "registrationCertificate"),
       ngoLogo: getUploadedFileName(req.files, "ngoLogo"),
+      ngoCover: getUploadedFileName(req.files, "ngoCover"),
       certificate12A: getUploadedFileName(req.files, "certificate12A"),
       certificate80G: getUploadedFileName(req.files, "certificate80G")
     };

@@ -1,5 +1,9 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { GoogleLogin } from "@react-oauth/google";
+
+const API_BASE_URL = String(import.meta.env.VITE_API_BASE_URL || "http://localhost:5000").replace(/\/$/, "");
+const GOOGLE_CLIENT_ID = String(import.meta.env.VITE_GOOGLE_CLIENT_ID || "").trim();
 
 function Login() {
   const navigate = useNavigate();
@@ -31,6 +35,22 @@ function Login() {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [showForgotModal, setShowForgotModal] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState("");
+  const [forgotLoading, setForgotLoading] = useState(false);
+  const [forgotError, setForgotError] = useState("");
+  const [forgotSuccess, setForgotSuccess] = useState("");
+  const [showResetModal, setShowResetModal] = useState(false);
+  const [resetToken, setResetToken] = useState("");
+  const [resetPasswordData, setResetPasswordData] = useState({
+    password: "",
+    confirmPassword: "",
+  });
+  const [resetLoading, setResetLoading] = useState(false);
+  const [resetError, setResetError] = useState("");
+  const [resetSuccess, setResetSuccess] = useState("");
+  const [googleLoading, setGoogleLoading] = useState(false);
+  const [googleError, setGoogleError] = useState("");
 
   /* ======================
       HANDLERS
@@ -46,9 +66,224 @@ function Login() {
 
   const toggleMode = () => {
     setError("");
+    setGoogleError("");
     setIsLogin(!isLogin);
     setLoginData({ email: "", password: "" });
     setRegisterData({ name: "", email: "", password: "", confirmPassword: "" });
+  };
+
+  const openForgotPassword = () => {
+    setError("");
+    setForgotEmail(loginData.email || "");
+    setForgotError("");
+    setForgotSuccess("");
+    setShowForgotModal(true);
+  };
+
+  const closeForgotModal = () => {
+    if (forgotLoading) return;
+    setShowForgotModal(false);
+
+    if (new URLSearchParams(location.search).get("forgot") === "1") {
+      navigate("/login", { replace: true });
+    }
+  };
+
+  const handleForgotPasswordSubmit = async (e) => {
+    e.preventDefault();
+
+    setForgotError("");
+    setForgotSuccess("");
+
+    if (!forgotEmail.trim()) {
+      setForgotError("Email is required");
+      return;
+    }
+
+    setForgotLoading(true);
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/forgot-password`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ email: forgotEmail.trim() }),
+      });
+
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok || !data.success) {
+        throw new Error(data.message || "Unable to send reset link");
+      }
+
+      const message =
+        data.message || "If this email exists, a reset link has been sent.";
+      setForgotSuccess(message);
+
+      setTimeout(() => {
+        setShowForgotModal(false);
+        if (new URLSearchParams(location.search).get("forgot") === "1") {
+          navigate("/login", { replace: true });
+        }
+      }, 1400);
+    } catch (err) {
+      setForgotError(err.message || "Unable to send reset link");
+    } finally {
+      setForgotLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    const tokenFromQuery = new URLSearchParams(location.search).get("resetToken");
+    if (!tokenFromQuery) return;
+
+    if (!isLogin) {
+      setIsLogin(true);
+    }
+
+    setResetToken(tokenFromQuery);
+    setResetError("");
+    setResetSuccess("");
+    setShowResetModal(true);
+  }, [location.search, isLogin]);
+
+  useEffect(() => {
+    const forgotFlag = new URLSearchParams(location.search).get("forgot");
+    if (forgotFlag !== "1") return;
+
+    if (!isLogin) {
+      setIsLogin(true);
+    }
+
+    setForgotError("");
+    setForgotSuccess("");
+    setShowForgotModal(true);
+  }, [location.search, isLogin]);
+
+  const closeResetModal = () => {
+    if (resetLoading) return;
+
+    setShowResetModal(false);
+    setResetToken("");
+    setResetPasswordData({ password: "", confirmPassword: "" });
+    setResetError("");
+    setResetSuccess("");
+
+    if (new URLSearchParams(location.search).get("resetToken")) {
+      navigate("/login", { replace: true });
+    }
+  };
+
+  const handleResetPasswordSubmit = async (e) => {
+    e.preventDefault();
+    setResetError("");
+    setResetSuccess("");
+
+    if (!resetToken) {
+      setResetError("Invalid reset token");
+      return;
+    }
+
+    if (resetPasswordData.password.length < 6) {
+      setResetError("Password must be at least 6 characters long");
+      return;
+    }
+
+    if (resetPasswordData.password !== resetPasswordData.confirmPassword) {
+      setResetError("Passwords do not match");
+      return;
+    }
+
+    setResetLoading(true);
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/reset-password/${encodeURIComponent(resetToken)}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ password: resetPasswordData.password }),
+      });
+
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok || !data.success) {
+        throw new Error(data.message || "Unable to reset password");
+      }
+
+      if (data?.token) {
+        localStorage.setItem("token", data.token);
+      }
+      if (data?.data) {
+        localStorage.setItem("user", JSON.stringify(data.data));
+      }
+      window.dispatchEvent(new Event("authChanged"));
+
+      setResetSuccess("Password reset successful. Redirecting to home...");
+
+      sessionStorage.setItem(
+        "flash_message",
+        JSON.stringify({ type: "success", message: "Password reset successful. Logged in automatically." })
+      );
+
+      setTimeout(() => {
+        setShowResetModal(false);
+        navigate("/", { replace: true });
+      }, 1500);
+    } catch (err) {
+      setResetError(err.message || "Unable to reset password");
+    } finally {
+      setResetLoading(false);
+    }
+  };
+
+  const handleGoogleLoginSuccess = async (credentialResponse) => {
+    const credential = String(credentialResponse?.credential || "").trim();
+    if (!credential) {
+      setGoogleError("Google sign-in failed. Please try again.");
+      return;
+    }
+
+    setError("");
+    setGoogleError("");
+    setGoogleLoading(true);
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/google-login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ credential }),
+      });
+
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok || !data.success) {
+        throw new Error(data.message || "Google sign-in failed");
+      }
+
+      sessionStorage.setItem(
+        "flash_message",
+        JSON.stringify({ type: "success", message: "Logged in successfully." })
+      );
+
+      if (data?.token) {
+        localStorage.setItem("token", data.token);
+      }
+      if (data?.data) {
+        localStorage.setItem("user", JSON.stringify(data.data));
+      }
+
+      window.dispatchEvent(new Event("authChanged"));
+      navigate(getRedirectPath(), { replace: true });
+    } catch (err) {
+      setGoogleError(err.message || "Google sign-in failed");
+    } finally {
+      setGoogleLoading(false);
+    }
+  };
+
+  const handleGoogleLoginError = () => {
+    setGoogleError("Google sign-in was cancelled or failed.");
   };
 
   /* ======================
@@ -57,10 +292,11 @@ function Login() {
   const handleLoginSubmit = async (e) => {
     e.preventDefault();
     setError("");
+    setGoogleError("");
     setLoading(true);
 
     try {
-      const res = await fetch("http://localhost:5000/api/login", {
+      const res = await fetch(`${API_BASE_URL}/api/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -76,7 +312,9 @@ function Login() {
         "flash_message",
         JSON.stringify({ type: "success", message: "Logged in successfully." })
       );
-      localStorage.setItem("token", data.token);
+      if (data?.token) {
+        localStorage.setItem("token", data.token);
+      }
       localStorage.setItem("user", JSON.stringify(data.data));
       window.dispatchEvent(new Event("authChanged"));
       navigate(getRedirectPath(), { replace: true });
@@ -90,6 +328,7 @@ function Login() {
   const handleRegisterSubmit = async (e) => {
     e.preventDefault();
     setError("");
+    setGoogleError("");
 
     if (registerData.password !== registerData.confirmPassword) {
       setError("Passwords do not match");
@@ -99,7 +338,7 @@ function Login() {
     setLoading(true);
 
     try {
-      const res = await fetch("http://localhost:5000/api/register", {
+      const res = await fetch(`${API_BASE_URL}/api/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -120,7 +359,9 @@ function Login() {
         "flash_message",
         JSON.stringify({ type: "success", message: "Account created successfully." })
       );
-      localStorage.setItem("token", data.token);
+      if (data?.token) {
+        localStorage.setItem("token", data.token);
+      }
       localStorage.setItem("user", JSON.stringify(data.data));
       window.dispatchEvent(new Event("authChanged"));
       navigate(getRedirectPath(), { replace: true });
@@ -260,7 +501,9 @@ function Login() {
               {/* Forgot Password Link (Login Only) */}
               {isLogin && (
                 <div style={styles.forgotPass}>
-                  <a href="#" style={styles.link}>Forgot password?</a>
+                  <button type="button" onClick={openForgotPassword} style={styles.linkButton}>
+                    Forgot password?
+                  </button>
                 </div>
               )}
 
@@ -268,6 +511,43 @@ function Login() {
                 {loading ? "Processing..." : isLogin ? "Sign In" : "Create Account"}
               </button>
             </form>
+
+            {isLogin && (
+              <>
+                <div style={styles.authDivider}>
+                  <span style={styles.authDividerLine} />
+                  <span style={styles.authDividerText}>or continue with</span>
+                  <span style={styles.authDividerLine} />
+                </div>
+
+                {googleError && (
+                  <div style={styles.errorBox}>{googleError}</div>
+                )}
+
+                {GOOGLE_CLIENT_ID ? (
+                  <div style={styles.googleSection}>
+                    {googleLoading ? (
+                      <button type="button" style={styles.disabledBtn} disabled>
+                        Signing in with Google...
+                      </button>
+                    ) : (
+                      <GoogleLogin
+                        onSuccess={handleGoogleLoginSuccess}
+                        onError={handleGoogleLoginError}
+                        useOneTap={false}
+                        theme="outline"
+                        text="signin_with"
+                        shape="pill"
+                      />
+                    )}
+                  </div>
+                ) : (
+                  <p style={styles.googleHint}>
+                    Google sign-in is not configured. Add <strong>VITE_GOOGLE_CLIENT_ID</strong> in your frontend env.
+                  </p>
+                )}
+              </>
+            )}
 
             <p style={styles.toggleText}>
               {isLogin ? "Don't have an account? " : "Already have an account? "}
@@ -278,6 +558,96 @@ function Login() {
           </div>
         </div>
       </div>
+
+      {showForgotModal && (
+        <div style={styles.modalOverlay} onClick={closeForgotModal}>
+          <div style={styles.modalCard} onClick={(e) => e.stopPropagation()}>
+            <h3 style={styles.modalTitle}>Forgot Password</h3>
+            <p style={styles.modalSubtitle}>
+              Enter your email to receive a password reset link.
+            </p>
+
+            {forgotError && <div style={styles.modalError}>{forgotError}</div>}
+            {forgotSuccess && <div style={styles.modalSuccess}>{forgotSuccess}</div>}
+
+            <form onSubmit={handleForgotPasswordSubmit} style={styles.modalForm}>
+              <input
+                type="email"
+                value={forgotEmail}
+                onChange={(e) => setForgotEmail(e.target.value)}
+                placeholder="name@example.com"
+                style={styles.modalInput}
+                required
+              />
+
+              <div style={styles.modalActions}>
+                <button
+                  type="button"
+                  onClick={closeForgotModal}
+                  style={styles.modalCancelBtn}
+                  disabled={forgotLoading}
+                >
+                  Cancel
+                </button>
+                <button type="submit" style={styles.modalSubmitBtn} disabled={forgotLoading}>
+                  {forgotLoading ? "Sending..." : "Send Link"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {showResetModal && (
+        <div style={styles.modalOverlay} onClick={closeResetModal}>
+          <div style={styles.modalCard} onClick={(e) => e.stopPropagation()}>
+            <h3 style={styles.modalTitle}>Reset Password</h3>
+            <p style={styles.modalSubtitle}>
+              Enter your new password to continue.
+            </p>
+
+            {resetError && <div style={styles.modalError}>{resetError}</div>}
+            {resetSuccess && <div style={styles.modalSuccess}>{resetSuccess}</div>}
+
+            <form onSubmit={handleResetPasswordSubmit} style={styles.modalForm}>
+              <input
+                type="password"
+                value={resetPasswordData.password}
+                onChange={(e) =>
+                  setResetPasswordData((prev) => ({ ...prev, password: e.target.value }))
+                }
+                placeholder="New password (min 6 chars)"
+                style={styles.modalInput}
+                required
+              />
+              <input
+                type="password"
+                value={resetPasswordData.confirmPassword}
+                onChange={(e) =>
+                  setResetPasswordData((prev) => ({ ...prev, confirmPassword: e.target.value }))
+                }
+                placeholder="Confirm new password"
+                style={styles.modalInput}
+                required
+              />
+
+              <div style={styles.modalActions}>
+                <button
+                  type="button"
+                  onClick={closeResetModal}
+                  style={styles.modalCancelBtn}
+                  disabled={resetLoading}
+                >
+                  Cancel
+                </button>
+                <button type="submit" style={styles.modalSubmitBtn} disabled={resetLoading}>
+                  {resetLoading ? "Updating..." : "Reset Password"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -499,6 +869,131 @@ const styles = {
     color: "#2e7d32",
     textDecoration: "none",
     fontWeight: "500",
+  },
+  linkButton: {
+    border: "none",
+    background: "transparent",
+    color: "#2e7d32",
+    textDecoration: "none",
+    fontWeight: "500",
+    cursor: "pointer",
+    padding: 0,
+    fontSize: "0.9rem",
+    fontFamily: "inherit",
+  },
+  modalOverlay: {
+    position: "fixed",
+    inset: 0,
+    backgroundColor: "rgba(15, 23, 42, 0.6)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 2000,
+    padding: "16px",
+  },
+  modalCard: {
+    width: "100%",
+    maxWidth: "420px",
+    backgroundColor: "#fff",
+    borderRadius: "14px",
+    boxShadow: "0 20px 45px rgba(15, 23, 42, 0.25)",
+    padding: "22px",
+  },
+  modalTitle: {
+    margin: "0 0 8px",
+    color: "#111827",
+    fontSize: "1.25rem",
+  },
+  modalSubtitle: {
+    margin: "0 0 14px",
+    color: "#6b7280",
+    fontSize: "0.92rem",
+    lineHeight: 1.5,
+  },
+  modalForm: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "12px",
+  },
+  modalInput: {
+    padding: "12px 14px",
+    border: "1px solid #d1d5db",
+    borderRadius: "10px",
+    fontSize: "0.96rem",
+    outline: "none",
+  },
+  modalActions: {
+    display: "flex",
+    justifyContent: "flex-end",
+    gap: "10px",
+    marginTop: "4px",
+  },
+  modalCancelBtn: {
+    border: "1px solid #d1d5db",
+    background: "#fff",
+    color: "#374151",
+    borderRadius: "10px",
+    padding: "9px 12px",
+    cursor: "pointer",
+    fontWeight: 600,
+  },
+  modalSubmitBtn: {
+    border: "none",
+    background: "#2e7d32",
+    color: "#fff",
+    borderRadius: "10px",
+    padding: "9px 12px",
+    cursor: "pointer",
+    fontWeight: 600,
+  },
+  modalError: {
+    marginBottom: "10px",
+    background: "#fee2e2",
+    color: "#b91c1c",
+    border: "1px solid #fecaca",
+    borderRadius: "8px",
+    padding: "9px 11px",
+    fontSize: "0.86rem",
+  },
+  modalSuccess: {
+    marginBottom: "10px",
+    background: "#dcfce7",
+    color: "#166534",
+    border: "1px solid #bbf7d0",
+    borderRadius: "8px",
+    padding: "9px 11px",
+    fontSize: "0.86rem",
+  },
+  authDivider: {
+    display: "flex",
+    alignItems: "center",
+    gap: "10px",
+    marginTop: "18px",
+  },
+  authDividerLine: {
+    flex: 1,
+    height: "1px",
+    backgroundColor: "#e5e7eb",
+  },
+  authDividerText: {
+    color: "#6b7280",
+    fontSize: "0.85rem",
+    fontWeight: 500,
+  },
+  googleSection: {
+    marginTop: "14px",
+    display: "flex",
+    justifyContent: "center",
+  },
+  googleHint: {
+    marginTop: "12px",
+    color: "#b45309",
+    backgroundColor: "#fffbeb",
+    border: "1px solid #fde68a",
+    borderRadius: "8px",
+    padding: "10px 12px",
+    fontSize: "0.85rem",
+    lineHeight: 1.45,
   },
   toggleText: {
     marginTop: "30px",

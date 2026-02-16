@@ -1,6 +1,5 @@
 import jwt from "jsonwebtoken";
-import dotenv from "dotenv";
-dotenv.config();
+import "../config/loadEnv.js";
 
 // Verify JWT Token
 export const verifyToken = (req, res, next) => {

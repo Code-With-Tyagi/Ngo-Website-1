@@ -7,6 +7,7 @@ const router = express.Router();
 const ngoUpload = upload.fields([
   { name: "registrationCertificate", maxCount: 1 },
   { name: "ngoLogo", maxCount: 1 },
+  { name: "ngoCover", maxCount: 1 },
   { name: "certificate12A", maxCount: 1 },
   { name: "certificate80G", maxCount: 1 }
 ]);

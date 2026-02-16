@@ -9,6 +9,7 @@ import Volunteer from "../pages/volunteer.jsx";
 import AddNGO from "../pages/addNgo.jsx";
 import Login from "../pages/login.jsx";
 import Contact from "../pages/contact.jsx";
+import ResetPassword from "../pages/resetPassword.jsx";
 
 import OrphanageSupport from "../pages/services/OrphanageSupport.jsx";
 import ElderlyCare from "../pages/services/ElderlyCare.jsx";
@@ -82,6 +83,9 @@ function AppRoutes() {
         />
         <Route path="/add-ngo" element={<AddNGO />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/forgot-password" element={<Navigate to="/login?forgot=1" replace />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/reset-password/:token" element={<ResetPassword />} />
         <Route path="/contact" element={<Contact />} />
       </Routes>
     </>

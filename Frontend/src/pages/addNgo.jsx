@@ -160,6 +160,7 @@ const AddNGOPage = () => {
     // Step 5 (Files)
     registrationCertificate: null,
     ngoLogo: null,
+    ngoCover: null,
     certificate12A: null,
     certificate80G: null,
     agreeToTerms: false
@@ -181,6 +182,11 @@ const AddNGOPage = () => {
     if (name === "phone" || name === "whatsapp") {
       // Keep contact numbers numeric-only and max 10 digits.
       nextValue = String(value).replace(/\D/g, "").slice(0, 10);
+    }
+
+    if (name === "pincode") {
+      // Keep pincode numeric-only and max 6 digits (prevents negative values too).
+      nextValue = String(value).replace(/\D/g, "").slice(0, 6);
     }
 
     if (name === "panNumber") {
@@ -312,7 +318,7 @@ const AddNGOPage = () => {
       // 2. Append standard text fields
       Object.keys(formData).forEach(key => {
         // Exclude files and array initially
-        const excludeList = ['services', 'registrationCertificate', 'ngoLogo', 'certificate12A', 'certificate80G'];
+        const excludeList = ['services', 'registrationCertificate', 'ngoLogo', 'ngoCover', 'certificate12A', 'certificate80G'];
         
         if (!excludeList.includes(key)) {
            // Ensure we don't send null/undefined as strings
@@ -331,6 +337,9 @@ const AddNGOPage = () => {
       }
       if (formData.ngoLogo) {
         dataToSend.append('ngoLogo', formData.ngoLogo);
+      }
+      if (formData.ngoCover) {
+        dataToSend.append('ngoCover', formData.ngoCover);
       }
       if (formData.certificate12A) {
         dataToSend.append('certificate12A', formData.certificate12A);
@@ -628,6 +637,14 @@ const AddNGOPage = () => {
                     onFileSelect={handleFileSelect} 
                     selectedFile={formData.ngoLogo}
                     error={errors.ngoLogo}
+                  />
+                  <FileUploadBox 
+                    title="Cover Image (Landscape)" 
+                    name="ngoCover" 
+                    optional
+                    onFileSelect={handleFileSelect} 
+                    selectedFile={formData.ngoCover}
+                    error={errors.ngoCover}
                   />
                   <FileUploadBox 
                     title="12A Certificate" 

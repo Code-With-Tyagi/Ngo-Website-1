@@ -12,6 +12,7 @@ const Contact = () => {
 
   const [errors, setErrors] = useState({});
   const [status, setStatus] = useState('idle'); // 'idle', 'submitting', 'success', 'error'
+  const [submitMessage, setSubmitMessage] = useState('');
 
   // 2. Handle Input Changes
   const handleChange = (e) => {
@@ -20,6 +21,11 @@ const Contact = () => {
     // Clear error when user types
     if (errors[name]) {
       setErrors({ ...errors, [name]: '' });
+    }
+
+    if (status === 'error') {
+      setStatus('idle');
+      setSubmitMessage('');
     }
 
     setFormData({
@@ -45,21 +51,48 @@ const Contact = () => {
   };
 
   // 4. Handle Submission
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     
     if (!validate()) return;
 
     setStatus('submitting');
+    setSubmitMessage('');
 
-    // Simulate API Call
-    setTimeout(() => {
+    try {
+      const response = await fetch("http://localhost:5000/api/contact", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          name: formData.name,
+          email: formData.email,
+          subject: formData.subject,
+          message: formData.message,
+          privacyAccepted: formData.privacy
+        })
+      });
+
+      const result = await response.json().catch(() => ({}));
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.message || "Failed to send message. Please try again.");
+      }
+
       setStatus('success');
+      setSubmitMessage(result.message || "Your message has been successfully sent. We will get back to you shortly.");
       setFormData({ name: '', email: '', subject: 'General Inquiry', message: '', privacy: false });
-      
+
       // Reset status after 5 seconds to allow new messages
-      setTimeout(() => setStatus('idle'), 5000);
-    }, 2000);
+      setTimeout(() => {
+        setStatus('idle');
+        setSubmitMessage('');
+      }, 5000);
+    } catch (error) {
+      setStatus('error');
+      setSubmitMessage(error.message || "Failed to send message. Please try again.");
+    }
   };
 
   return (
@@ -254,6 +287,17 @@ const Contact = () => {
             animation: fadeIn 0.5s ease;
           }
 
+          .error-box {
+            background: #fee2e2;
+            border: 1px solid #fecaca;
+            color: #991b1b;
+            padding: 20px;
+            border-radius: var(--radius);
+            text-align: center;
+            margin-bottom: 20px;
+            animation: fadeIn 0.5s ease;
+          }
+
           @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
           @keyframes spin { to { transform: rotate(360deg); } }
 
@@ -341,7 +385,14 @@ const Contact = () => {
             {status === 'success' ? (
               <div className="success-box">
                 <h3 style={{ marginBottom: '8px' }}>Thank you! 🎉</h3>
-                <p>Your message has been successfully sent. We will get back to you shortly.</p>
+                <p>{submitMessage || "Your message has been successfully sent. We will get back to you shortly."}</p>
+              </div>
+            ) : null}
+
+            {status === 'error' ? (
+              <div className="error-box">
+                <h3 style={{ marginBottom: '8px' }}>Unable to Send Message</h3>
+                <p>{submitMessage || "Failed to send message. Please try again."}</p>
               </div>
             ) : null}
 

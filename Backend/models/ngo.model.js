@@ -125,6 +125,7 @@ const ngoSchema = new mongoose.Schema({
   documents: {
     registrationCertificate: { type: String, default: '' },
     ngoLogo: { type: String, default: '' },
+    ngoCover: { type: String, default: '' },
     certificate12A: { type: String, default: '' },
     certificate80G: { type: String, default: '' }
   },

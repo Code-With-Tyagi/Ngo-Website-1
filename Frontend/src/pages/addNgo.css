@@ -200,6 +200,17 @@ body {
   font-family: inherit;
 }
 
+/* Hide up/down spinner arrows on number inputs */
+.form-input[type="number"]::-webkit-outer-spin-button,
+.form-input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.form-input[type="number"] {
+  -moz-appearance: textfield;
+}
+
 .form-input:focus {
   border-color: var(--primary-green);
   background-color: var(--white);

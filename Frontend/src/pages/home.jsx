@@ -203,7 +203,7 @@ function Home() {
                     <path d="M8 11h8"></path>
                     <path d="M12 7v8"></path>
                   </svg>
-                  Nurturing Childhood
+                  Child Welfare
                 </h3>
                 <p style={styles.cardText}>Providing shelter, nutrition, and holistic education to orphaned children.</p>
                 <Link to="/services/orphanage" className="card-link" style={styles.cardLink}>Support a Child →</Link>
@@ -386,7 +386,9 @@ const styles = {
     overflow: "hidden", 
     boxShadow: "0 10px 30px rgba(0,0,0,0.05)", 
     textAlign: "left",
-    border: "1px solid #eee"
+    border: "1px solid #eee",
+    display: "flex",
+    flexDirection: "column"
   },
   cardImage: { 
     width: "100%", 
