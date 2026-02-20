@@ -76,7 +76,15 @@ function Navbar() {
 
         <ul className="navbar-menu">
           <li><Link to="/">Home</Link></li>
-          <li><Link to="/services">Services</Link></li>
+          <li className="dropdown">
+            <Link to="/services">Services</Link>
+            <ul className="dropdown-menu">
+              <li><Link to="/services/medical/camp">Health Camp</Link></li>
+              <li><Link to="/services/medical/cancer">Cancer Support</Link></li>
+              <li><Link to="/services/medical/kidney">Kidney Support</Link></li>
+              <li><Link to="/services/elder/medical">Elderly Medical</Link></li>
+            </ul>
+          </li>
           <li><Link to="/find-ngos">Find NGOs</Link></li>
           <li><Link to="/donate">Donate</Link></li>
           <li><Link to="/volunteer">Volunteer</Link></li>
@@ -136,6 +144,12 @@ function Navbar() {
           </li>
           <li onClick={() => setMenuOpen(false)}>
             <Link to="/services">Services</Link>
+          </li>
+          <li onClick={() => setMenuOpen(false)}>
+            <Link to="/services/medical/cancer">Cancer Support</Link>
+          </li>
+          <li onClick={() => setMenuOpen(false)}>
+            <Link to="/services/medical/kidney">Kidney Support</Link>
           </li>
           <li onClick={() => setMenuOpen(false)}>
             <Link to="/find-ngos">Find NGOs</Link>

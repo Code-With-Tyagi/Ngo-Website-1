@@ -148,7 +148,7 @@ const SERVICE_DATA = [
           "Helping low-income patients afford recurring dialysis sessions and related treatment costs for long-term kidney care.",
         image: medicalKidney,
         cta: "Donate Now",
-        href: "/donate",
+        href: "/services/medical/kidney",
       },
     ],
   },

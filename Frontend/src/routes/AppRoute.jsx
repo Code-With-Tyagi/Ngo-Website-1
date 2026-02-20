@@ -23,6 +23,7 @@ import KanyadanYojna from "../pages/services/welfare/kanyadan.jsx";
 import Rites from "../pages/services/welfare/rites.jsx";
 import FreeHealthCamp from "../pages/services/medical/camp.jsx";
 import CancerSupport from "../pages/services/medical/cancer.jsx";
+import KidneySupport from "../pages/services/medical/kidney.jsx";
 
 
 
@@ -87,6 +88,7 @@ function AppRoutes() {
         <Route path="/services/welfare/rites" element={<Rites />} />
         <Route path="/services/medical/camp" element={<FreeHealthCamp />} />
         <Route path="/services/medical/cancer" element={<CancerSupport />} />
+        <Route path="/services/medical/kidney" element={<KidneySupport />} />
 
         <Route path="/find-ngos" element={<FindNGOs />} />
         <Route path="/donate" element={<Donate />} />

@@ -1,0 +1,374 @@
+import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
+import {
+    FaChevronDown,
+    FaHeartbeat,
+    FaRegClock,
+    FaShieldAlt,
+    FaUserCircle,
+    FaStethoscope
+} from "react-icons/fa";
+
+// Replace with your actual image path
+import kidneyCareImg from "../../../assets/images/Medical/kidney.jpg";
+import "./kidney.css";
+
+const DONATIONS = [
+    { name: "Suresh Gupta", amount: 50000, note: "For dialysis sessions" },
+    { name: "Anita Kapoor", amount: 20000, note: "Keep fighting" },
+    { name: "Rajat Sharma", amount: 15000, note: "Donating for the cause" },
+    { name: "Deepika Padukone", amount: 10000, note: "Health is wealth" },
+    { name: "Amitabh Bachchan", amount: 8000, note: "Stay strong" },
+    { name: "Meena Iyer", amount: 5000, note: "For medical aid" },
+    { name: "Anonymous", amount: 3000, note: "God bless all" },
+    { name: "Rahul Dravid", amount: 2500, note: "Small help from my side" },
+    { name: "Sneha Reddy", amount: 2000, note: "Stay hopeful" },
+    { name: "Vinod Khanna", amount: 1500, note: "Best wishes" },
+    { name: "Anonymous", amount: 1000, note: "Keep going" },
+    { name: "Kavita Singh", amount: 750, note: "For essential care" },
+    { name: "Anonymous", amount: 500, note: "Blessings" },
+    { name: "Arun Jaitley", amount: 500, note: "Support the needy" },
+];
+
+const FAQS = [
+    {
+        question: "What kidney support do you provide?",
+        answer:
+            "We provide financial assistance for dialysis sessions, essential medications, and pre-transplant diagnostic tests for patients in need.",
+    },
+    {
+        question: "How is my donation used for kidney patients?",
+        answer:
+            "Donations directly cover the recurring costs of dialysis, which many underprivileged families cannot afford on a long-term basis.",
+    },
+    {
+        question: "Do you help with kidney transplant costs?",
+        answer:
+            "While our primary focus is on ongoing dialysis support, we do provide partial financial assistance for life-saving transplant surgeries based on medical board approvals.",
+    },
+    {
+        question: "How can I refer a patient for kidney care assistance?",
+        answer:
+            "Submit medical reports and financial status proof via our application form. Our team reviews all cases for eligibility and transparency.",
+    },
+    {
+        question: "Can I volunteer for kidney health awareness camps?",
+        answer:
+            "Yes! We regularly hold awareness sessions on preventive kidney health and chronic kidney disease management. Reach out to join our volunteer base.",
+    },
+];
+
+const STORY = [
+    "Chronic Kidney Disease (CKD) often requires regular dialysis, which is expensive and physically draining. For families with limited income, the recurring cost of treatment becomes an insurmountable barrier.",
+    "Our 'Kidney Care & Dialysis Support' initiative helps bridge this gap. We provide financial aid to ensure that patients do not miss their life-saving sessions due to lack of funds.",
+    "Your contribution makes a tangible difference. Every donation helps us cover treatment costs, ensuring that kidney patients can lead more stable and hopeful lives while they wait for long-term solutions."
+];
+
+function KidneySupport() {
+    const [storyExpanded, setStoryExpanded] = useState(false);
+    const [openFaq, setOpenFaq] = useState(null);
+    const [shareLabel, setShareLabel] = useState("Share");
+    const [donationModalType, setDonationModalType] = useState(null);
+
+    const isDonationModalOpen = donationModalType !== null;
+    const sortedDonations = useMemo(
+        () => [...DONATIONS].sort((a, b) => b.amount - a.amount),
+        []
+    );
+    const modalDonations =
+        donationModalType === "top" ? sortedDonations.slice(0, 10) : sortedDonations;
+    const modalTitle = donationModalType === "top" ? "Top Donations" : "All Donations";
+
+    useEffect(() => {
+        window.scrollTo(0, 0);
+    }, []);
+
+    useEffect(() => {
+        if (!isDonationModalOpen) return undefined;
+
+        const previousOverflow = document.body.style.overflow;
+        document.body.style.overflow = "hidden";
+
+        const closeOnEscape = (event) => {
+            if (event.key === "Escape") {
+                setDonationModalType(null);
+            }
+        };
+
+        window.addEventListener("keydown", closeOnEscape);
+
+        return () => {
+            document.body.style.overflow = previousOverflow;
+            window.removeEventListener("keydown", closeOnEscape);
+        };
+    }, [isDonationModalOpen]);
+
+    const formatAmount = (amount) => `Rs ${amount.toLocaleString("en-IN")}`;
+
+    const handleShare = async () => {
+        const pageUrl = window.location.href;
+        try {
+            if (navigator.share) {
+                await navigator.share({
+                    title: "Support Kidney Dialysis",
+                    text: "Help provide life-saving dialysis sessions to those in need.",
+                    url: pageUrl,
+                });
+                return;
+            }
+
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                await navigator.clipboard.writeText(pageUrl);
+                setShareLabel("Link Copied");
+                window.setTimeout(() => setShareLabel("Share"), 1600);
+            }
+        } catch {
+            setShareLabel("Share");
+        }
+    };
+
+    return (
+        <section className="kidney-detail-page">
+            <div className="kidney-detail-shell">
+                <div className="kidney-content-grid">
+                    <aside className="kidney-side-stack">
+                        <article className="kidney-campaign-card">
+                            <div className="kidney-campaign-image-wrap">
+                                <img src={kidneyCareImg} alt="Kidney care and dialysis support" />
+                                <span className="kidney-campaign-chip">Tax Benefits Available</span>
+                            </div>
+
+                            <div className="kidney-campaign-body">
+                                <h1>Support Life-Saving Kidney Dialysis & Care</h1>
+                                <p className="kidney-campaign-org">by Arogya Care Foundation</p>
+
+                                <div className="kidney-campaign-amounts">
+                                    <strong>Rs 4,20,000</strong>
+                                    <span>raised of Rs 8,00,000 goal</span>
+                                </div>
+
+                                <div className="kidney-campaign-progress" aria-hidden="true">
+                                    <span className="kidney-campaign-progress-fill" style={{ width: "52.5%" }} />
+                                </div>
+
+                                <div className="kidney-campaign-stats">
+                                    <div>
+                                        <strong>275</strong>
+                                        <span>Donors</span>
+                                    </div>
+                                    <div>
+                                        <strong>12</strong>
+                                        <span>Days left</span>
+                                    </div>
+                                    <div>
+                                        <strong>52%</strong>
+                                        <span>Funded</span>
+                                    </div>
+                                </div>
+
+                                <div className="kidney-campaign-actions">
+                                    <Link to="/donate" className="kidney-campaign-btn kidney-campaign-btn-primary">
+                                        Donate Now
+                                    </Link>
+                                    <button
+                                        type="button"
+                                        className="kidney-campaign-btn kidney-campaign-btn-secondary"
+                                        onClick={handleShare}
+                                    >
+                                        {shareLabel}
+                                    </button>
+                                </div>
+                            </div>
+                        </article>
+                    </aside>
+
+                    <div className="kidney-main-stack">
+                        <section className="kidney-section-card">
+                            <h2>The Cause</h2>
+                            <div className={`kidney-story-content ${storyExpanded ? "expanded" : ""}`}>
+                                {STORY.map((paragraph) => (
+                                    <p key={paragraph}>{paragraph}</p>
+                                ))}
+                            </div>
+                            <button
+                                type="button"
+                                className="kidney-text-action"
+                                onClick={() => setStoryExpanded((current) => !current)}
+                            >
+                                {storyExpanded ? "Read Less" : "Read More"}
+                            </button>
+                        </section>
+
+                        <section className="kidney-section-card">
+                            <div className="kidney-section-head">
+                                <h2>Recent Donations</h2>
+                                <span>275 Donations</span>
+                            </div>
+
+                            <div className="kidney-donation-list">
+                                {sortedDonations.slice(0, 3).map((donation) => (
+                                    <article key={`${donation.name}-${donation.amount}`} className="kidney-donation-item">
+                                        <FaUserCircle aria-hidden="true" />
+                                        <div>
+                                            <h3>{donation.name}</h3>
+                                            <p>{formatAmount(donation.amount)}</p>
+                                        </div>
+                                        <span>{donation.note}</span>
+                                    </article>
+                                ))}
+                            </div>
+
+                            <div className="kidney-section-links">
+                                <button type="button" onClick={() => setDonationModalType("top")}>
+                                    View Top Donations
+                                </button>
+                                <button type="button" onClick={() => setDonationModalType("all")}>
+                                    View All Donations
+                                </button>
+                            </div>
+                        </section>
+
+                        <section className="kidney-support-panel">
+                            <h2>Support this mission</h2>
+                            <p>Every small contribution ensures a dialysis session for someone in need.</p>
+                            <div className="kidney-support-actions">
+                                <Link to="/donate" className="kidney-campaign-btn kidney-campaign-btn-primary">
+                                    Donate Now
+                                </Link>
+                                <button
+                                    type="button"
+                                    className="kidney-campaign-btn kidney-campaign-btn-secondary"
+                                    onClick={handleShare}
+                                >
+                                    Share
+                                </button>
+                            </div>
+                        </section>
+
+                        <section className="kidney-section-card">
+                            <h2>Organizers</h2>
+                            <div className="kidney-organizer-list">
+                                <article className="kidney-organizer-item">
+                                    <span className="kidney-organizer-logo">AC</span>
+                                    <div>
+                                        <h3>Arogya Care Foundation</h3>
+                                        <p>Verified Medical Charity</p>
+                                    </div>
+                                </article>
+                                <article className="kidney-organizer-item">
+                                    <span className="kidney-organizer-logo kidney-organizer-logo-alt">
+                                        <FaStethoscope size={18} />
+                                    </span>
+                                    <div>
+                                        <h3>LifeConnect</h3>
+                                        <p>Campaign Partner</p>
+                                    </div>
+                                </article>
+                            </div>
+                        </section>
+
+                        <section className="kidney-trust-strip">
+                            <h2>Your impact is secure and verified</h2>
+                            <div className="kidney-trust-grid">
+                                <article>
+                                    <FaShieldAlt aria-hidden="true" />
+                                    <div>
+                                        <h3>Secure</h3>
+                                        <p>100% secure payment processing with top-tier encryption.</p>
+                                    </div>
+                                </article>
+                                <article>
+                                    <FaHeartbeat aria-hidden="true" />
+                                    <div>
+                                        <h3>Life-Saving</h3>
+                                        <p>Directly funds treatments, dialysis cycles, and crucial medication.</p>
+                                    </div>
+                                </article>
+                                <article>
+                                    <FaRegClock aria-hidden="true" />
+                                    <div>
+                                        <h3>Transparent</h3>
+                                        <p>All medical bills and impact reports are shared with donors.</p>
+                                    </div>
+                                </article>
+                            </div>
+                        </section>
+
+                        <section className="kidney-section-card kidney-faq-section">
+                            <h2>FAQs</h2>
+                            <p className="kidney-faq-intro">Common questions about this kidney dialysis initiative.</p>
+
+                            <div className="kidney-faq-list">
+                                {FAQS.map((faq, index) => {
+                                    const isOpen = openFaq === index;
+                                    return (
+                                        <article key={faq.question} className={`kidney-faq-item ${isOpen ? "open" : ""}`}>
+                                            <button
+                                                type="button"
+                                                className="kidney-faq-question"
+                                                onClick={() => setOpenFaq(isOpen ? null : index)}
+                                                aria-expanded={isOpen}
+                                            >
+                                                <span>{faq.question}</span>
+                                                <FaChevronDown aria-hidden="true" />
+                                            </button>
+                                            {isOpen && <p className="kidney-faq-answer">{faq.answer}</p>}
+                                        </article>
+                                    );
+                                })}
+                            </div>
+                        </section>
+                    </div>
+                </div>
+            </div>
+
+            {isDonationModalOpen && (
+                <div
+                    className="kidney-donation-modal-backdrop"
+                    role="presentation"
+                    onClick={() => setDonationModalType(null)}
+                >
+                    <div
+                        className="kidney-donation-modal"
+                        role="dialog"
+                        aria-modal="true"
+                        aria-label={modalTitle}
+                        onClick={(event) => event.stopPropagation()}
+                    >
+                        <div className="kidney-donation-modal-head">
+                            <h3>{modalTitle}</h3>
+                            <button
+                                type="button"
+                                className="kidney-donation-modal-close"
+                                onClick={() => setDonationModalType(null)}
+                                aria-label="Close donations popup"
+                            >
+                                x
+                            </button>
+                        </div>
+                        <p className="kidney-donation-modal-subtitle">
+                            Showing {modalDonations.length} contributions to this kidney dialysis initiative
+                        </p>
+                        <div className="kidney-donation-modal-list">
+                            {modalDonations.map((donation) => (
+                                <article
+                                    key={`${donation.name}-${donation.amount}-modal`}
+                                    className="kidney-donation-item kidney-donation-item-modal"
+                                >
+                                    <FaUserCircle aria-hidden="true" />
+                                    <div>
+                                        <h3>{donation.name}</h3>
+                                        <p>{formatAmount(donation.amount)}</p>
+                                    </div>
+                                    <span>{donation.note}</span>
+                                </article>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            )}
+        </section>
+    );
+}
+
+export default KidneySupport;

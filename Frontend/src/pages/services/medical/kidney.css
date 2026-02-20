@@ -1,0 +1,634 @@
+/* kidney.css - Kidney Dialysis Medical Green Theme (Matches Cancer.css) */
+
+.kidney-detail-page {
+    /* Soft, very light mint/greenish off-white background */
+    background: #f4f9f5;
+    color: #1f2937;
+    min-height: 100%;
+    padding: 20px 12px 56px;
+}
+
+.kidney-detail-shell {
+    max-width: 760px;
+    margin: 0 auto;
+}
+
+.kidney-content-grid,
+.kidney-side-stack,
+.kidney-main-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.kidney-campaign-card,
+.kidney-section-card,
+.kidney-support-panel,
+.kidney-trust-strip {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+    overflow: hidden;
+}
+
+.kidney-campaign-image-wrap {
+    position: relative;
+    background: #eaf5ec;
+}
+
+.kidney-campaign-image-wrap img {
+    width: 100%;
+    height: clamp(220px, 45vw, 340px);
+    object-fit: cover;
+    object-position: center;
+    display: block;
+}
+
+/* Light Green theme for the chip */
+.kidney-campaign-chip {
+    position: absolute;
+    left: 12px;
+    bottom: 12px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: #166534;
+    /* Dark green text */
+    background: #dcfce7;
+    /* Light green bg */
+    border: 1px solid #bbf7d0;
+    /* Soft green border */
+    border-radius: 999px;
+    padding: 6px 10px;
+}
+
+.kidney-campaign-body {
+    padding: 16px;
+}
+
+.kidney-campaign-body h1 {
+    margin: 0;
+    font-size: clamp(1.2rem, 2.6vw, 1.65rem);
+    line-height: 1.35;
+}
+
+.kidney-campaign-org {
+    margin: 8px 0 14px;
+    color: #6b7280;
+    font-size: 0.95rem;
+}
+
+.kidney-campaign-amounts {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin-bottom: 10px;
+}
+
+.kidney-campaign-amounts strong {
+    font-size: 1.2rem;
+    color: #111827;
+}
+
+.kidney-campaign-amounts span {
+    font-size: 0.86rem;
+    color: #6b7280;
+}
+
+.kidney-campaign-progress {
+    width: 100%;
+    height: 8px;
+    border-radius: 999px;
+    background: #e5e7eb;
+    overflow: hidden;
+}
+
+/* Green gradient for progress bar */
+.kidney-campaign-progress-fill {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, #16a34a, #4ade80);
+}
+
+.kidney-campaign-stats {
+    margin-top: 12px;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.kidney-campaign-stats div {
+    background: #f9fafb;
+    border: 1px solid #f3f4f6;
+    border-radius: 10px;
+    padding: 10px;
+    text-align: center;
+}
+
+.kidney-campaign-stats strong {
+    display: block;
+    font-size: 1rem;
+}
+
+.kidney-campaign-stats span {
+    display: block;
+    color: #6b7280;
+    font-size: 0.78rem;
+    margin-top: 3px;
+}
+
+.kidney-campaign-actions {
+    margin-top: 14px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.kidney-campaign-btn {
+    min-height: 44px;
+    border-radius: 8px;
+    border: 1px solid transparent;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+/* Primary button to primary green */
+.kidney-campaign-btn-primary {
+    background: #16a34a;
+    color: #ffffff;
+}
+
+.kidney-campaign-btn-primary:hover {
+    background: #15803d;
+    /* Darker green on hover */
+}
+
+.kidney-campaign-btn-secondary {
+    background: #ffffff;
+    color: #374151;
+    border-color: #d1d5db;
+}
+
+.kidney-campaign-btn-secondary:hover {
+    background: #f3f4f6;
+}
+
+.kidney-section-card {
+    padding: 16px;
+}
+
+.kidney-section-card h2,
+.kidney-support-panel h2,
+.kidney-trust-strip h2 {
+    margin: 0;
+    font-size: 1.08rem;
+}
+
+.kidney-story-content {
+    margin-top: 10px;
+    max-height: 122px;
+    overflow: hidden;
+    position: relative;
+}
+
+.kidney-story-content::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 44px;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0), #ffffff);
+}
+
+.kidney-story-content.expanded {
+    max-height: none;
+}
+
+.kidney-story-content.expanded::after {
+    content: none;
+}
+
+.kidney-story-content p {
+    margin: 0 0 10px;
+    color: #4b5563;
+    line-height: 1.55;
+    font-size: 0.92rem;
+}
+
+/* Text links to green */
+.kidney-text-action {
+    margin-top: 6px;
+    border: 0;
+    padding: 0;
+    background: transparent;
+    color: #16a34a;
+    font-weight: 700;
+    font-size: 0.88rem;
+    cursor: pointer;
+}
+
+.kidney-text-action:hover {
+    color: #15803d;
+}
+
+.kidney-section-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.kidney-section-head span {
+    font-size: 0.82rem;
+    color: #6b7280;
+}
+
+.kidney-donation-list {
+    margin-top: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.kidney-donation-item {
+    display: grid;
+    grid-template-columns: 28px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+    border: 1px solid #f3f4f6;
+    border-radius: 10px;
+    background: #f9fafb;
+}
+
+/* User icon to primary green */
+.kidney-donation-item svg {
+    font-size: 1.3rem;
+    color: #16a34a;
+}
+
+.kidney-donation-item h3 {
+    margin: 0;
+    font-size: 0.9rem;
+}
+
+.kidney-donation-item p {
+    margin: 2px 0 0;
+    font-size: 0.8rem;
+    color: #6b7280;
+}
+
+/* Donation note pill - Light Green */
+.kidney-donation-item span {
+    border: 1px solid #bbf7d0;
+    background: #dcfce7;
+    color: #166534;
+    border-radius: 999px;
+    padding: 4px 8px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.kidney-section-links {
+    display: flex;
+    gap: 14px;
+    margin-top: 12px;
+}
+
+.kidney-section-links button {
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: #16a34a;
+    font-size: 0.83rem;
+    font-weight: 700;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.kidney-section-links button:hover {
+    color: #15803d;
+}
+
+/* Support panel background to very soft green */
+.kidney-support-panel {
+    padding: 16px;
+    background: #f0fdf4;
+    border-color: #dcfce7;
+}
+
+.kidney-support-panel p {
+    margin: 8px 0 12px;
+    color: #4b5563;
+    font-size: 0.9rem;
+}
+
+.kidney-support-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 8px;
+}
+
+.kidney-organizer-list {
+    margin-top: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.kidney-organizer-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* Organizer logo bg */
+.kidney-organizer-logo {
+    width: 40px;
+    height: 40px;
+    border-radius: 999px;
+    background: #16a34a;
+    color: #ffffff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.88rem;
+    font-weight: 800;
+}
+
+.kidney-organizer-logo-alt {
+    background: #22c55e;
+    font-size: 1rem;
+    text-transform: lowercase;
+}
+
+.kidney-organizer-item h3 {
+    margin: 0;
+    font-size: 0.92rem;
+}
+
+.kidney-organizer-item p {
+    margin: 2px 0 0;
+    color: #6b7280;
+    font-size: 0.82rem;
+}
+
+/* Trust strip */
+.kidney-trust-strip {
+    padding: 16px;
+    background: #f9fafb;
+    border-color: #e5e7eb;
+}
+
+.kidney-trust-grid {
+    margin-top: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.kidney-trust-grid article {
+    display: grid;
+    grid-template-columns: 22px minmax(0, 1fr);
+    gap: 10px;
+    align-items: start;
+}
+
+.kidney-trust-grid svg {
+    margin-top: 2px;
+    color: #4b5563;
+}
+
+.kidney-trust-grid h3 {
+    margin: 0;
+    font-size: 0.9rem;
+}
+
+.kidney-trust-grid p {
+    margin: 2px 0 0;
+    font-size: 0.82rem;
+    color: #6b7280;
+}
+
+.kidney-faq-section {
+    padding-bottom: 10px;
+}
+
+.kidney-faq-intro {
+    margin: 8px 0 12px;
+    color: #6b7280;
+    font-size: 0.9rem;
+}
+
+.kidney-faq-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.kidney-faq-item {
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    overflow: hidden;
+    background: #f9fafb;
+}
+
+.kidney-faq-question {
+    width: 100%;
+    border: 0;
+    background: transparent;
+    padding: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    text-align: left;
+    font-weight: 600;
+    color: #1f2937;
+    cursor: pointer;
+}
+
+.kidney-faq-question span {
+    font-size: 0.88rem;
+    line-height: 1.4;
+}
+
+.kidney-faq-question svg {
+    flex-shrink: 0;
+    font-size: 0.8rem;
+    transition: transform 0.2s ease;
+}
+
+.kidney-faq-item.open .kidney-faq-question svg {
+    transform: rotate(180deg);
+}
+
+.kidney-faq-answer {
+    margin: 0;
+    border-top: 1px solid #f3f4f6;
+    padding: 10px 12px;
+    color: #4b5563;
+    line-height: 1.55;
+    font-size: 0.86rem;
+}
+
+/* Modal styles */
+.kidney-donation-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 1200;
+    background: rgba(17, 24, 39, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+}
+
+.kidney-donation-modal {
+    width: min(620px, 100%);
+    max-height: min(86vh, 780px);
+    background: #ffffff;
+    border-radius: 14px;
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 18px 42px rgba(17, 24, 39, 0.24);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.kidney-donation-modal-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 14px 16px;
+    border-bottom: 1px solid #f3f4f6;
+}
+
+.kidney-donation-modal-head h3 {
+    margin: 0;
+    font-size: 1.05rem;
+}
+
+.kidney-donation-modal-close {
+    width: 32px;
+    height: 32px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    background: #ffffff;
+    color: #374151;
+    cursor: pointer;
+}
+
+.kidney-donation-modal-subtitle {
+    margin: 0;
+    padding: 10px 16px;
+    font-size: 0.86rem;
+    color: #6b7280;
+    border-bottom: 1px solid #f3f4f6;
+}
+
+.kidney-donation-modal-list {
+    padding: 12px 16px 16px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.kidney-donation-item-modal {
+    background: #f9fafb;
+}
+
+/* Responsive Rules */
+@media (min-width: 768px) {
+    .kidney-detail-page {
+        padding: 28px 18px 64px;
+    }
+
+    .kidney-campaign-body,
+    .kidney-section-card,
+    .kidney-support-panel,
+    .kidney-trust-strip {
+        padding: 20px;
+    }
+
+    .kidney-campaign-body h1 {
+        font-size: 1.75rem;
+    }
+
+    .kidney-campaign-actions,
+    .kidney-support-actions {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .kidney-story-content {
+        max-height: 146px;
+    }
+}
+
+@media (min-width: 1080px) {
+    .kidney-detail-page {
+        padding: 28px 18px 70px;
+    }
+
+    .kidney-detail-shell {
+        max-width: 1240px;
+    }
+
+    .kidney-content-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 390px;
+        gap: 22px;
+        align-items: start;
+    }
+
+    .kidney-main-stack {
+        order: 1;
+    }
+
+    .kidney-side-stack {
+        order: 2;
+        position: sticky;
+        top: 92px;
+    }
+
+    .kidney-campaign-image-wrap img {
+        height: 250px;
+    }
+}
+
+@media (max-width: 420px) {
+    .kidney-campaign-stats {
+        grid-template-columns: 1fr;
+    }
+
+    .kidney-campaign-actions {
+        grid-template-columns: 1fr;
+    }
+
+    .kidney-donation-item,
+    .kidney-donation-item-modal {
+        grid-template-columns: 24px minmax(0, 1fr);
+    }
+
+    .kidney-donation-item span,
+    .kidney-donation-item-modal span {
+        grid-column: 2 / -1;
+        justify-self: start;
+        margin-top: 4px;
+    }
+
+    .kidney-section-links {
+        flex-direction: column;
+        gap: 8px;
+    }
+}
