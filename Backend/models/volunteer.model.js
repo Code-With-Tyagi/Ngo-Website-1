@@ -5,8 +5,7 @@ const volunteerSchema = new mongoose.Schema({
   user: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
-    required: [true, "User is required"],
-    index: true
+    required: [true, "User is required"]
   },
 
   // --- 1. Personal Information ---
@@ -78,7 +77,7 @@ const volunteerSchema = new mongoose.Schema({
   // --- 4. Safety & Verification ---
   idType: {
     type: String,
-    enum: ['Aadhaar', 'PAN', 'Passport', 'VoterID'],
+    enum: ['Aadhaar', 'PAN'],
     required: [true, 'ID Type is required']
   },
   idNumber: {
@@ -86,10 +85,9 @@ const volunteerSchema = new mongoose.Schema({
     required: [true, 'ID Number is required'],
     trim: true
   },
-  // IMPORTANT: We store the path/URL here, not the file object
-  idImage: {
-    type: String,
-    required: [true, 'ID Image proof is required']
+  idVerified: {
+    type: Boolean,
+    default: false
   },
   emergencyName: {
     type: String,

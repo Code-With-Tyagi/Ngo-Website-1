@@ -1,5 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
+import LanguageToggle from "../LanguageToggle.jsx";
 import "./navbar.css";
 
 function Navbar() {
@@ -18,6 +19,7 @@ function Navbar() {
   const [isLoggedIn, setIsLoggedIn] = useState(Boolean(localStorage.getItem("token")));
   const [user, setUser] = useState(readUser());
   const userInitial = user?.name ? user.name.charAt(0).toUpperCase() : "U";
+  const isAdmin = user?.role === "admin";
 
   useEffect(() => {
     const syncAuth = () => {
@@ -76,13 +78,12 @@ function Navbar() {
 
         <ul className="navbar-menu">
           <li><Link to="/">Home</Link></li>
-          <li className="dropdown">
-            <Link to="/services">Services</Link>
-            <ul className="dropdown-menu">
-              <li><Link to="/services/medical/camp">Health Camp</Link></li>
-              <li><Link to="/services/medical/cancer">Cancer Support</Link></li>
-              <li><Link to="/services/medical/kidney">Kidney Support</Link></li>
-              <li><Link to="/services/elder/medical">Elderly Medical</Link></li>
+          <li><Link to="/services">Services</Link></li>
+          <li className="dropdown gallery-dropdown">
+            <span className="dropdown-trigger">Gallery <span className="dropdown-arrow">▼</span></span>
+            <ul className="dropdown-menu gallery-menu">
+              <li><Link to="/gallery/images">📷 Images</Link></li>
+              <li><Link to="/gallery/videos">🎥 Videos</Link></li>
             </ul>
           </li>
           <li><Link to="/find-ngos">Find NGOs</Link></li>
@@ -93,6 +94,7 @@ function Navbar() {
         </ul>
 
         <div className="navbar-auth">
+          {/* <LanguageToggle /> */}
           {isLoggedIn ? (
             <div className="dropdown profile-dropdown">
               <div className="profile-icon" title={user?.name || "User"}>
@@ -100,8 +102,8 @@ function Navbar() {
               </div>
               <ul className="dropdown-menu profile-menu-right">
                 <li>
-                  <Link to="/profile" className="profile-link">
-                    My Profile
+                  <Link to={isAdmin ? "/admin" : "/profile"} className="profile-link">
+                    {isAdmin ? "Admin Panel" : "My Profile"}
                   </Link>
                 </li>
                 <li>
@@ -139,11 +141,20 @@ function Navbar() {
         </div>
 
         <ul>
+          <li style={{ borderBottom: "2px solid #f0f0f0", paddingBottom: "10px", marginBottom: "10px" }}>
+            {/* <LanguageToggle /> */}
+          </li>
           <li onClick={() => setMenuOpen(false)}>
             <Link to="/">Home</Link>
           </li>
           <li onClick={() => setMenuOpen(false)}>
             <Link to="/services">Services</Link>
+          </li>
+          <li onClick={() => setMenuOpen(false)}>
+            <Link to="/gallery/images">📷 Gallery - Images</Link>
+          </li>
+          <li onClick={() => setMenuOpen(false)}>
+            <Link to="/gallery/videos">🎥 Gallery - Videos</Link>
           </li>
           <li onClick={() => setMenuOpen(false)}>
             <Link to="/services/medical/cancer">Cancer Support</Link>
@@ -170,9 +181,8 @@ function Navbar() {
                 style={{ borderTop: "2px solid #f0f0f0", marginTop: "10px" }}
                 onClick={() => setMenuOpen(false)}
               >
-                <Link to="/profile" style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                  <div className="profile-icon mobile-icon">{userInitial}</div>
-                  My Profile
+                <Link to={isAdmin ? "/admin" : "/profile"} style={{ display: "flex", alignItems: "center", gap: "10px", ...(isAdmin ? { color: "#1e40af", fontWeight: "bold" } : {}) }}>
+                  {isAdmin ? "📊 Admin Panel" : (<><div className="profile-icon mobile-icon">{userInitial}</div>My Profile</>)}
                 </Link>
               </li>
               <li>

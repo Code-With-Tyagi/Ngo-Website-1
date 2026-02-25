@@ -1,921 +1,666 @@
 import React, { useState } from "react";
-
-import { FaHeart, FaShieldAlt, FaRupeeSign, FaCheckCircle, FaLock } from "react-icons/fa";
-
-import { MdChildCare, MdElderly, MdComputer } from "react-icons/md";
-
-
-
-import elderImage from "../assets/images/elderly/elder.png";
-
-
+import { useLocation } from "react-router-dom";
+import { FaCheckCircle, FaLock } from "react-icons/fa";
+import cowImage from "../assets/images/elderly/elder.png";
+import { useLanguage } from "../utils/useLanguage.jsx";
 
 const Donate = () => {
-
-  const [activeCause, setActiveCause] = useState("orphanage");
-
-  const [amount, setAmount] = useState(3000); // Default selection
-
+  const location = useLocation();
+  const { language } = useLanguage();
+  const isHi = language === "hi";
+  const serviceImage = location.state?.serviceImage || cowImage;
+  const serviceTitle = location.state?.serviceTitle || "Help Guardian of Angels rescue and care for abandoned and injured cows";
+  
+  const [selectedAmount, setSelectedAmount] = useState(3000);
   const [customAmount, setCustomAmount] = useState("");
+  const [tipPercentage, setTipPercentage] = useState(8);
+  const [donorName, setDonorName] = useState("");
+  const [isAnonymous, setIsAnonymous] = useState(false);
+  const [mobile, setMobile] = useState("");
+  const [email, setEmail] = useState("");
+  const [address, setAddress] = useState("");
+  const [pincode, setPincode] = useState("");
+  const [panNumber, setPanNumber] = useState("");
+  const [wantsNotification, setWantsNotification] = useState(true);
+  const [wantsTaxCertificate, setWantsTaxCertificate] = useState(true);
+  const [citizenConfirmed, setCitizenConfirmed] = useState(false);
 
-  const [frequency, setFrequency] = useState("monthly");
+  // Calculate amounts
+  const donationAmount = customAmount || selectedAmount;
+  const tipAmount = Math.floor((donationAmount * tipPercentage) / 100);
+  const totalAmount = donationAmount + tipAmount;
 
+  const handleAmountClick = (amount) => {
+    setSelectedAmount(amount);
+    setCustomAmount("");
+  };
 
-
-  // --- CONFIGURATION ---
-
-  const causeData = {
-
-    orphanage: {
-
-      id: "orphanage",
-
-      label: "Orphanage Support",
-
-      icon: <MdChildCare />,
-
-      color: "#F59E0B", // Amber
-
-      darkColor: "#B45309",
-
-      bgImage: "https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?q=80&w=2070",
-
-      quote: "Every child deserves a childhood. Be the family they never had.",
-
-      presets: [
-
-        { val: 500, label: "Meals", desc: "1 week of nutrition" },
-
-        { val: 1500, label: "School Kit", desc: "Books & Uniform" },
-
-        { val: 3000, label: "Full Care", desc: "1 Month Shelter & Food" },
-
-        { val: 10000, label: "Education", desc: "1 Year School Fees" },
-
-      ]
-
-    },
-
-    elderly: {
-
-      id: "elderly",
-
-      label: "Elderly Care",
-
-      icon: <MdElderly />,
-
-      color: "#10B981", // Emerald
-
-      darkColor: "#047857",
-
-      bgImage: elderImage,
-
-      quote: "Gray hair is a crown of splendor. Help us protect our elders.",
-
-      presets: [
-
-        { val: 800, label: "Medicine", desc: "Diabetes/BP Meds" },
-
-        { val: 2000, label: "Rations", desc: "Grocery Kit for 1 Month" },
-
-        { val: 5000, label: "Comfort", desc: "Medical Bed Support" },
-
-        { val: 7500, label: "Vision", desc: "Cataract Surgery" },
-
-      ]
-
-    },
-
-    digital: {
-
-      id: "digital",
-
-      label: "Digital India",
-
-      icon: <MdComputer />,
-
-      color: "#3B82F6", // Blue
-
-      darkColor: "#1D4ED8",
-
-      bgImage: "https://images.pexels.com/photos/1181216/pexels-photo-1181216.jpeg?auto=compress&cs=tinysrgb&w=1600",
-
-      quote: "Knowledge is power. Empower rural India with digital literacy.",
-
-      presets: [
-
-        { val: 500, label: "Data", desc: "Internet for Learning" },
-
-        { val: 2500, label: "Tablet", desc: "Device Contribution" },
-
-        { val: 6000, label: "Training", desc: "6-Month Coding Course" },
-
-        { val: 15000, label: "Hardware", desc: "Setup 1 Desktop PC" },
-
-      ]
-
+  const handleCustomAmountChange = (e) => {
+    const value = e.target.value;
+    if (value === "" || (parseInt(value) >= 300 && !isNaN(value))) {
+      setCustomAmount(value);
     }
-
   };
 
-
-
-  const current = causeData[activeCause];
-
-  const finalAmount = customAmount || amount;
-
-
-
-  const handleDonate = (e) => {
-
+  const handleProceedPayment = (e) => {
     e.preventDefault();
-
-    if (!finalAmount) return alert("Please enter an amount");
-
-    alert(`Thank you! Proceeding to payment of ₹${finalAmount} for ${current.label}.`);
-
+    if (!citizenConfirmed) {
+      alert("Please confirm you are an Indian citizen");
+      return;
+    }
+    if (!donorName && !isAnonymous) {
+      alert("Please enter your name or make it anonymous");
+      return;
+    }
+    alert(
+      `Processing donation of ₹${totalAmount} for Guardian of Angels`
+    );
   };
-
-
 
   return (
-
     <div className="donate-page">
-
-      {/* --- INJECTED STYLES --- */}
-
       <style>{`
-
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
-
-
-
-        :root {
-
-          --theme-color: ${current.color};
-
-          --theme-dark: ${current.darkColor};
-
+        * {
+          margin: 0;
+          padding: 0;
+          box-sizing: border-box;
         }
-
-
 
         .donate-page {
-
-          font-family: 'Inter', sans-serif;
-
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+          background: #f8f8f8;
           min-height: 100vh;
-
-          position: relative;
-
-          display: flex;
-
-          align-items: center;
-
-          justify-content: center;
-
           padding: 40px 20px;
-
-          overflow: hidden;
-
-          color: #333;
-
         }
 
-
-
-        /* DYNAMIC BACKGROUND */
-
-        .bg-layer {
-
-          position: absolute;
-
-          top: 0; left: 0; width: 100%; height: 100%;
-
-          background-image: url('${current.bgImage}');
-
-          background-size: cover;
-
-          background-position: center;
-
-          transition: background-image 0.5s ease-in-out;
-
-          z-index: 0;
-
-        }
-
-        .bg-overlay {
-
-          position: absolute;
-
-          top: 0; left: 0; width: 100%; height: 100%;
-
-          background: linear-gradient(135deg, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.6) 100%);
-
-          z-index: 1;
-
-        }
-
-
-
-        /* MAIN CONTENT GRID */
-
-        .donate-container {
-
-          position: relative;
-
-          z-index: 10;
-
-          max-width: 1200px;
-
-          width: 100%;
-
+        .donate-wrapper {
+          max-width: 1400px;
+          margin: 0 auto;
           display: grid;
-
-          grid-template-columns: 1fr 1fr;
-
-          gap: 60px;
-
-          align-items: flex-start;
-
-        }
-
-
-
-        /* LEFT COLUMN: TEXT */
-
-        .text-col {
-
-          color: white;
-
-          padding-top: 40px;
-
-        }
-
-        .trust-badge {
-
-          display: inline-flex;
-
-          align-items: center;
-
-          gap: 8px;
-
-          background: rgba(255,255,255,0.15);
-
-          backdrop-filter: blur(5px);
-
-          padding: 8px 16px;
-
-          border-radius: 30px;
-
-          font-size: 0.9rem;
-
-          font-weight: 600;
-
-          margin-bottom: 25px;
-
-          border: 1px solid rgba(255,255,255,0.2);
-
-        }
-
-        .main-heading {
-
-          font-size: 3.5rem;
-
-          font-weight: 800;
-
-          line-height: 1.1;
-
-          margin-bottom: 20px;
-
-          text-shadow: 0 4px 20px rgba(0,0,0,0.3);
-
-        }
-
-        .quote-box {
-
-          font-size: 1.2rem;
-
-          line-height: 1.6;
-
-          opacity: 0.9;
-
-          border-left: 4px solid var(--theme-color);
-
-          padding-left: 20px;
-
-          margin-bottom: 40px;
-
-        }
-
-        .impact-stats {
-
-          display: flex;
-
+          grid-template-columns: 1.2fr 1fr;
           gap: 40px;
-
+          align-items: start;
         }
 
-        .stat h3 { font-size: 2rem; margin: 0; color: var(--theme-color); }
-
-        .stat p { margin: 0; opacity: 0.7; font-size: 0.9rem; }
-
-
-
-        /* RIGHT COLUMN: CARD */
-
-        .donate-card {
-
-          background: rgba(255, 255, 255, 0.92);
-
-          backdrop-filter: blur(20px);
-
-          padding: 30px;
-
-          border-radius: 24px;
-
-          box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-
-          border: 1px solid rgba(255,255,255,0.8);
-
-          animation: slideUp 0.6s ease-out;
-
-        }
-
-
-
-        /* TABS */
-
-        .tabs-wrapper {
-
-          display: flex;
-
-          background: #f1f5f9;
-
-          padding: 5px;
-
-          border-radius: 15px;
-
-          margin-bottom: 25px;
-
-        }
-
-        .tab-item {
-
-          flex: 1;
-
-          display: flex;
-
-          align-items: center;
-
-          justify-content: center;
-
-          gap: 8px;
-
-          padding: 12px;
-
-          border: none;
-
-          background: transparent;
-
-          cursor: pointer;
-
-          font-weight: 600;
-
-          font-size: 0.9rem;
-
-          color: #64748b;
-
-          border-radius: 12px;
-
-          transition: all 0.3s;
-
-        }
-
-        .tab-item.active {
-
+        /* LEFT COLUMN - FORM */
+        .donation-form {
           background: white;
-
-          color: var(--theme-dark);
-
-          box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
-
+          padding: 40px;
+          border-radius: 12px;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
         }
 
-
-
-        /* FREQUENCY */
-
-        .freq-toggle {
-
-          display: flex;
-
-          gap: 20px;
-
-          margin-bottom: 20px;
-
-          justify-content: center;
-
-          font-size: 0.95rem;
-
+        .form-section-title {
+          font-size: 18px;
           font-weight: 600;
-
+          color: #1a1a1a;
+          margin: 0 0 20px 0;
         }
 
-        .freq-opt {
-
-          cursor: pointer;
-
-          color: #94a3b8;
-
-          padding-bottom: 5px;
-
-          transition: 0.3s;
-
-          position: relative;
-
-        }
-
-        .freq-opt.active { color: #333; }
-
-        .freq-opt.active::after {
-
-          content: '';
-
-          position: absolute; bottom: 0; left: 0; width: 100%; height: 2px;
-
-          background: var(--theme-color);
-
-        }
-
-
-
-        /* PRESETS GRID */
-
-        .preset-grid {
-
+        .amount-grid {
           display: grid;
-
-          grid-template-columns: 1fr 1fr;
-
-          gap: 15px;
-
+          grid-template-columns: 1fr 1fr 1fr;
+          gap: 12px;
           margin-bottom: 20px;
-
         }
 
-        .preset-box {
-
-          border: 2px solid #e2e8f0;
-
-          border-radius: 12px;
-
-          padding: 15px;
-
-          cursor: pointer;
-
-          transition: 0.2s;
-
+        .amount-btn {
+          padding: 16px;
+          border: 2px solid #e0e0e0;
+          border-radius: 8px;
           background: white;
-
-          position: relative;
-
-          overflow: hidden;
-
-        }
-
-        .preset-box:hover { border-color: var(--theme-color); transform: translateY(-2px); }
-
-        .preset-box.selected {
-
-          border-color: var(--theme-color);
-
-          background-color: #fff;
-
-          box-shadow: 0 0 0 4px rgba(0,0,0,0.05);
-
-        }
-
-        .preset-box.selected::before {
-
-          content: '✔';
-
-          position: absolute; top: 5px; right: 10px;
-
-          color: var(--theme-color); font-size: 14px;
-
-        }
-
-        .p-amount { font-size: 1.2rem; font-weight: 800; display: block; color: #1e293b; }
-
-        .p-desc { font-size: 0.8rem; color: #64748b; font-weight: 500; }
-
-
-
-        /* INPUT AREA */
-
-        .custom-input-box {
-
-          position: relative;
-
-          margin-bottom: 20px;
-
-        }
-
-        .input-currency {
-
-          position: absolute;
-
-          left: 15px; top: 50%; transform: translateY(-50%);
-
-          color: #64748b; font-weight: bold;
-
-        }
-
-        .custom-field {
-
-          width: 100%;
-
-          padding: 16px 16px 16px 35px;
-
-          border: 2px solid #e2e8f0;
-
-          border-radius: 12px;
-
-          font-size: 1rem;
-
-          font-weight: 600;
-
-          outline: none;
-
-          transition: 0.3s;
-
-        }
-
-        .custom-field:focus { border-color: var(--theme-color); }
-
-
-
-        /* SUBMIT BUTTON */
-
-        .donate-btn {
-
-          width: 100%;
-
-          padding: 18px;
-
-          background: var(--theme-color);
-
-          color: white;
-
-          font-size: 1.1rem;
-
-          font-weight: 700;
-
-          border: none;
-
-          border-radius: 12px;
-
           cursor: pointer;
+          font-size: 16px;
+          font-weight: 600;
+          color: #333;
+          transition: all 0.2s;
+          position: relative;
+        }
 
-          box-shadow: 0 10px 20px -5px rgba(0,0,0,0.2);
+        .amount-btn:hover {
+          border-color: #ff4757;
+        }
 
+        .amount-btn.selected {
+          border-color: #ff4757;
+          background: #fff5f5;
+          color: #ff4757;
+        }
+
+        .popular-badge {
+          position: absolute;
+          top: -10px;
+          left: 50%;
+          transform: translateX(-50%);
+          background: #ff4757;
+          color: white;
+          padding: 4px 12px;
+          border-radius: 20px;
+          font-size: 11px;
+          font-weight: 600;
+        }
+
+        .custom-amount-box {
+          margin-bottom: 24px;
+        }
+
+        .custom-amount-input {
+          width: 100%;
+          padding: 12px 16px;
+          border: 2px solid #e0e0e0;
+          border-radius: 8px;
+          font-size: 16px;
+          font-family: inherit;
+          outline: none;
+          transition: border 0.2s;
+        }
+
+        .custom-amount-input:focus {
+          border-color: #ff4757;
+        }
+
+        .custom-amount-label {
+          display: block;
+          font-size: 13px;
+          color: #888;
+          margin-top: 6px;
+        }
+
+        .tip-section {
           display: flex;
-
+          justify-content: space-between;
           align-items: center;
+          padding: 12px 0;
+          border-bottom: 1px solid #f0f0f0;
+          margin-bottom: 16px;
+        }
 
-          justify-content: center;
+        .tip-row-label {
+          font-size: 15px;
+          color: #666;
+        }
 
+        .tip-dropdown {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+
+        .tip-select {
+          padding: 6px 10px;
+          border: 1px solid #e0e0e0;
+          border-radius: 4px;
+          font-size: 14px;
+          cursor: pointer;
+          outline: none;
+          background: white;
+        }
+
+        .tip-amount {
+          font-size: 15px;
+          font-weight: 600;
+          color: #333;
+          min-width: 40px;
+          text-align: right;
+        }
+
+        .gift-card-link {
+          font-size: 14px;
+          color: #ff4757;
+          cursor: pointer;
+          margin-bottom: 20px;
+          text-decoration: underline;
+        }
+
+        .checkbox-group {
+          display: flex;
+          align-items: center;
           gap: 10px;
-
-          transition: 0.3s;
-
+          margin-bottom: 20px;
+          padding: 12px 0;
         }
 
-        .donate-btn:hover {
-
-          background: var(--theme-dark);
-
-          transform: translateY(-2px);
-
+        .checkbox-group input[type="checkbox"] {
+          width: 18px;
+          height: 18px;
+          cursor: pointer;
+          accent-color: #ff4757;
         }
 
+        .checkbox-group label {
+          font-size: 15px;
+          color: #333;
+          cursor: pointer;
+          margin: 0;
+        }
 
+        .details-section {
+          margin-top: 32px;
+          padding-top: 24px;
+          border-top: 1px solid #f0f0f0;
+        }
 
-        /* FOOTER */
+        .form-group {
+          margin-bottom: 16px;
+        }
 
-        .secure-footer {
+        .form-group label {
+          display: block;
+          font-size: 14px;
+          font-weight: 500;
+          color: #333;
+          margin-bottom: 6px;
+        }
 
-          margin-top: 20px;
+        .form-group input {
+          width: 100%;
+          padding: 10px 12px;
+          border: 1px solid #d0d0d0;
+          border-radius: 6px;
+          font-size: 14px;
+          font-family: inherit;
+          outline: none;
+          transition: border 0.2s;
+        }
 
-          text-align: center;
+        .form-group input:focus {
+          border-color: #ff4757;
+        }
 
-          font-size: 0.8rem;
-
-          color: #94a3b8;
-
+        .phone-input-group {
           display: flex;
+          gap: 8px;
+        }
 
-          justify-content: center;
-
+        .phone-code {
+          display: flex;
           align-items: center;
+          padding: 10px 12px;
+          border: 1px solid #d0d0d0;
+          border-radius: 6px;
+          background: #f9f9f9;
+          font-size: 14px;
+          color: #666;
+          min-width: 50px;
+        }
 
+        .phone-input-group input {
+          flex: 1;
+        }
+
+        .form-group-inline {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 12px;
+        }
+
+        /* RIGHT COLUMN - NGO CARD */
+        .ngo-card {
+          background: white;
+          border-radius: 12px;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+          overflow: hidden;
+        }
+
+        .ngo-image {
+          width: 100%;
+          height: 280px;
+          object-fit: cover;
+          background: #f5f5f5;
+        }
+
+        .ngo-details {
+          padding: 24px;
+        }
+
+        .ngo-title {
+          font-size: 18px;
+          font-weight: 600;
+          color: #1a1a1a;
+          margin-bottom: 16px;
+          line-height: 1.4;
+        }
+
+        .donation-summary {
+          background: #f9f9f9;
+          padding: 16px;
+          border-radius: 8px;
+          margin-bottom: 16px;
+        }
+
+        .summary-row {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 12px;
+          font-size: 15px;
+        }
+
+        .summary-row:last-child {
+          margin-bottom: 0;
+        }
+
+        .summary-row.total {
+          border-top: 1px solid #e0e0e0;
+          padding-top: 12px;
+          margin-top: 12px;
+          font-weight: 600;
+          font-size: 16px;
+          color: #1a1a1a;
+        }
+
+        .summary-label {
+          color: #666;
+        }
+
+        .summary-value {
+          font-weight: 600;
+          color: #333;
+        }
+
+        .tax-certificate-checkbox {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          padding: 12px;
+          background: #f9f9f9;
+          border-radius: 6px;
+          margin-bottom: 16px;
+        }
+
+        .tax-certificate-checkbox input[type="checkbox"] {
+          width: 16px;
+          height: 16px;
+          cursor: pointer;
+          accent-color: #ff4757;
+        }
+
+        .tax-certificate-checkbox label {
+          font-size: 14px;
+          color: #666;
+          cursor: pointer;
+          margin: 0;
+        }
+
+        .proceed-btn {
+          width: 100%;
+          padding: 14px;
+          background: #ff4757;
+          color: white;
+          border: none;
+          border-radius: 6px;
+          font-size: 15px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: background 0.2s;
+        }
+
+        .proceed-btn:hover {
+          background: #ff3838;
+        }
+
+        .secure-badge {
+          display: flex;
+          justify-content: center;
+          align-items: center;
           gap: 6px;
-
+          margin-top: 12px;
+          font-size: 13px;
+          color: #888;
         }
 
-
-
-        @keyframes slideUp {
-
-          from { opacity: 0; transform: translateY(20px); }
-
-          to { opacity: 1; transform: translateY(0); }
-
+        @media (max-width: 1024px) {
+          .donate-wrapper {
+            grid-template-columns: 1fr;
+          }
         }
 
+        @media (max-width: 768px) {
+          .donation-form {
+            padding: 24px;
+          }
 
+          .amount-grid {
+            grid-template-columns: 1fr 1fr;
+          }
 
-        @media (max-width: 900px) {
-
-          .donate-container { grid-template-columns: 1fr; }
-
-          .main-heading { font-size: 2.5rem; }
-
-          .donate-card { padding: 20px; }
-
-          .donate-page { padding: 80px 10px 40px 10px; }
-
+          .form-group-inline {
+            grid-template-columns: 1fr;
+          }
         }
-
       `}</style>
 
+      <div className="donate-wrapper">
+        {/* LEFT - DONATION FORM */}
+        <form className="donation-form" onSubmit={handleProceedPayment}>
+          <h2 className="form-section-title">Donation amount</h2>
 
-
-      {/* --- BACKGROUND LAYERS --- */}
-
-      <div className="bg-layer"></div>
-
-      <div className="bg-overlay"></div>
-
-
-
-      <div className="donate-container">
-
-
-
-        {/* --- LEFT SIDE: EMOTIONAL HOOK --- */}
-
-        <div className="text-col">
-
-          <div className="trust-badge">
-
-            <FaShieldAlt color="#FBBF24" /> 100% Tax Exempt (80G)
-
+          {/* Amount Preset Buttons */}
+          <div className="amount-grid">
+            <button
+              type="button"
+              className={`amount-btn ${selectedAmount === 5000 && !customAmount ? "selected" : ""}`}
+              onClick={() => handleAmountClick(5000)}
+            >
+              ₹5,000
+            </button>
+            <button
+              type="button"
+              className={`amount-btn ${selectedAmount === 3000 && !customAmount ? "selected" : ""}`}
+              onClick={() => handleAmountClick(3000)}
+            >
+              <span className="popular-badge">Popular</span>
+              ₹3,000
+            </button>
+            <button
+              type="button"
+              className={`amount-btn ${selectedAmount === 1500 && !customAmount ? "selected" : ""}`}
+              onClick={() => handleAmountClick(1500)}
+            >
+              ₹1,500
+            </button>
           </div>
 
-
-
-          <h1 className="main-heading">
-
-            Make a Real Difference<br />
-
-            <span style={{ color: current.color }}>Today.</span>
-
-          </h1>
-
-
-
-          <div className="quote-box">
-
-            "{current.quote}"
-
+          {/* Custom Amount */}
+          <div className="custom-amount-box">
+            <input
+              type="number"
+              className="custom-amount-input"
+              placeholder="Other amount - ₹300 or more"
+              value={customAmount}
+              onChange={handleCustomAmountChange}
+            />
           </div>
 
-
-
-          <div className="impact-stats">
-
-            <div className="stat">
-
-              <h3>50K+</h3>
-
-              <p>Lives Impacted</p>
-
-            </div>
-
-            <div className="stat">
-
-              <h3>₹12Cr</h3>
-
-              <p>Funds Raised</p>
-
-            </div>
-
-            <div className="stat">
-
-              <h3>15+</h3>
-
-              <p>States Covered</p>
-
-            </div>
-
-          </div>
-
-        </div>
-
-
-
-        {/* --- RIGHT SIDE: INTERACTIVE FORM --- */}
-
-        <div className="donate-card">
-
-
-
-          {/* 1. CAUSE TABS */}
-
-          <div className="tabs-wrapper">
-
-            {Object.values(causeData).map((cause) => (
-
-              <button
-
-                key={cause.id}
-
-                className={`tab-item ${activeCause === cause.id ? 'active' : ''}`}
-
-                onClick={() => setActiveCause(cause.id)}
-
+          {/* Tip Section */}
+          <div className="tip-section">
+            <label className="tip-row-label">Give Tip:</label>
+            <div className="tip-dropdown">
+              <select
+                className="tip-select"
+                value={tipPercentage}
+                onChange={(e) => setTipPercentage(parseInt(e.target.value))}
               >
-
-                {cause.icon} {cause.label.split(' ')[0]}
-
-              </button>
-
-            ))}
-
+                <option value={0}>0%</option>
+                <option value={5}>5%</option>
+                <option value={8}>8%</option>
+                <option value={10}>10%</option>
+                <option value={15}>15%</option>
+              </select>
+              <div className="tip-amount">₹{tipAmount}</div>
+            </div>
           </div>
 
+          {/* Gift Card Link */}
+          <div className="gift-card-link">Have a gift card?</div>
 
+          {/* Indian Citizen Checkbox */}
+          <div className="checkbox-group">
+            <input
+              type="checkbox"
+              id="citizen-confirm"
+              checked={citizenConfirmed}
+              onChange={(e) => setCitizenConfirmed(e.target.checked)}
+            />
+            <label htmlFor="citizen-confirm">I confirm that I am an Indian citizen</label>
+          </div>
 
-          <form onSubmit={handleDonate}>
+          {/* Your Details Section */}
+          <div className="details-section">
+            <h3 className="form-section-title">Your Details</h3>
 
-
-
-            {/* 2. FREQUENCY TOGGLE */}
-
-            <div className="freq-toggle">
-
-              <div
-
-                className={`freq-opt ${frequency === 'monthly' ? 'active' : ''}`}
-
-                onClick={() => setFrequency('monthly')}
-
-              >
-
-                Give Monthly <FaHeart size={12} color="red" />
-
-              </div>
-
-              <div
-
-                className={`freq-opt ${frequency === 'onetime' ? 'active' : ''}`}
-
-                onClick={() => setFrequency('onetime')}
-
-              >
-
-                Give Once
-
-              </div>
-
-            </div>
-
-
-
-            {/* 3. PRESETS GRID */}
-
-            <div className="preset-grid">
-
-              {current.presets.map((preset) => (
-
-                <div
-
-                  key={preset.val}
-
-                  className={`preset-box ${amount === preset.val && !customAmount ? 'selected' : ''}`}
-
-                  onClick={() => { setAmount(preset.val); setCustomAmount(''); }}
-
-                >
-
-                  <span className="p-amount">₹{preset.val}</span>
-
-                  <span className="p-desc">{preset.desc}</span>
-
-                </div>
-
-              ))}
-
-            </div>
-
-
-
-            {/* 4. CUSTOM AMOUNT */}
-
-            <div className="custom-input-box">
-
-              <span className="input-currency">₹</span>
-
+            {/* Full Name */}
+            <div className="form-group">
+              <label>Full Name*</label>
               <input
-
-                type="number"
-
-                placeholder="Enter custom amount"
-
-                className="custom-field"
-
-                value={customAmount}
-
-                onChange={(e) => setCustomAmount(e.target.value)}
-
+                type="text"
+                placeholder="eg. Raghu Kumar"
+                value={donorName}
+                onChange={(e) => setDonorName(e.target.value)}
               />
-
             </div>
 
-
-
-            {/* 5. IMPACT PREVIEW (Visual Feedback) */}
-
-            <div style={{
-
-              background: `${current.color}20`,
-
-              padding: '10px',
-
-              borderRadius: '8px',
-
-              marginBottom: '20px',
-
-              fontSize: '0.9rem',
-
-              color: current.darkColor,
-
-              display: 'flex',
-
-              alignItems: 'center',
-
-              gap: '10px'
-
-            }}>
-
-              <FaCheckCircle />
-
-              {customAmount || amount ?
-
-                `Your contribution of ₹${customAmount || amount} will help us support ${current.label.toLowerCase()}.` :
-
-                "Select an amount to see your impact."
-
-              }
-
+            {/* Anonymity Checkbox */}
+            <div className="checkbox-group">
+              <input
+                type="checkbox"
+                id="anonymous"
+                checked={isAnonymous}
+                onChange={(e) => setIsAnonymous(e.target.checked)}
+              />
+              <label htmlFor="anonymous">Make my donation anonymous</label>
             </div>
 
+            {/* Mobile Number */}
+            <div className="form-group">
+              <label>Mobile Number*</label>
+              <div className="phone-input-group">
+                <div className="phone-code">🇮🇳 +91</div>
+                <input
+                  type="tel"
+                  placeholder="10 digits"
+                  value={mobile}
+                  onChange={(e) => setMobile(e.target.value.slice(0, 10))}
+                />
+              </div>
+            </div>
 
+            {/* Email */}
+            <div className="form-group">
+              <label>Email*</label>
+              <input
+                type="email"
+                placeholder="eg. raghukumar@gmail.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+            </div>
 
-            {/* 6. SUBMIT BUTTON */}
+            {/* Billing Address & Pincode */}
+            <div className="form-group">
+              <label>Billing Address*</label>
+              <input
+                type="text"
+                placeholder="eg. 24, Ganesha Layout, Bengaluru"
+                value={address}
+                onChange={(e) => setAddress(e.target.value)}
+              />
+            </div>
 
-            <button type="submit" className="donate-btn">
+            <div className="form-group-inline">
+              <div className="form-group">
+                <label>Pincode*</label>
+                <input
+                  type="text"
+                  placeholder="eg. 560001"
+                  value={pincode}
+                  onChange={(e) => setPincode(e.target.value.slice(0, 6))}
+                />
+              </div>
+              <div className="form-group">
+                <label>PAN Number</label>
+                <input
+                  type="text"
+                  placeholder="eg. ABCTY1234D"
+                  value={panNumber}
+                  onChange={(e) => setPanNumber(e.target.value.toUpperCase().slice(0, 10))}
+                />
+              </div>
+            </div>
 
-              Donate Now <FaRupeeSign />
+            <p style={{ fontSize: "12px", color: "#888", margin: "8px 0 16px" }}>
+              Govt. mandates donor address collection
+            </p>
+            {panNumber && <p style={{ fontSize: "12px", color: "#888", margin: "0 0 16px" }}>
+              Required to claim tax exemption
+            </p>}
 
+            {/* Notification Checkbox */}
+            <div className="checkbox-group">
+              <input
+                type="checkbox"
+                id="notification"
+                checked={wantsNotification}
+                onChange={(e) => setWantsNotification(e.target.checked)}
+              />
+              <label htmlFor="notification">Send me updates and notifications via WhatsApp/SMS</label>
+            </div>
+          </div>
+
+          {/* Button at bottom of form */}
+          <button type="submit" className="proceed-btn">
+            Proceed to pay ₹{totalAmount.toLocaleString('en-IN')} →
+          </button>
+
+          <div className="secure-badge">
+            <FaLock size={10} /> All payments go through a secure gateway
+          </div>
+        </form>
+
+        {/* RIGHT - NGO CARD */}
+        <div className="ngo-card">
+          <img src={serviceImage} alt="Service" className="ngo-image" />
+
+          <div className="ngo-details">
+            <h3 className="ngo-title">{serviceTitle}</h3>
+
+            <div className="donation-summary">
+              <div className="summary-row">
+                <span className="summary-label">Donation Amount</span>
+                <span className="summary-value">₹{donationAmount.toLocaleString('en-IN')}</span>
+              </div>
+              <div className="summary-row">
+                <span className="summary-label">Give Tip: {tipPercentage} %</span>
+                <span className="summary-value">₹{tipAmount.toLocaleString('en-IN')}</span>
+              </div>
+              <div className="summary-row total">
+                <span>Total Donation</span>
+                <span>₹{totalAmount.toLocaleString('en-IN')}</span>
+              </div>
+            </div>
+
+            <div className="tax-certificate-checkbox">
+              <input
+                type="checkbox"
+                id="tax-certificate"
+                checked={wantsTaxCertificate}
+                onChange={(e) => setWantsTaxCertificate(e.target.checked)}
+              />
+              <label htmlFor="tax-certificate">Get Indian tax certificate for your donation</label>
+            </div>
+
+            <button type="submit" className="proceed-btn" onClick={handleProceedPayment}>
+              Proceed to pay ₹{totalAmount.toLocaleString('en-IN')} →
             </button>
 
-
-
-            {/* 7. SECURE FOOTER */}
-
-            <div className="secure-footer">
-
-              <FaLock size={10} /> 256-bit SSL Encrypted • Razorpay • UPI • Cards
-
+            <div className="secure-badge">
+              <FaLock size={10} /> All payments go through a secure gateway
             </div>
-
-
-
-          </form>
-
+          </div>
         </div>
-
       </div>
-
     </div>
-
   );
-
 };
-
-
 
 export default Donate;

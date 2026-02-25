@@ -8,6 +8,8 @@ import {
     FaUserCircle,
     FaStethoscope
 } from "react-icons/fa";
+import { useLanguage, translate } from "../../../utils/useLanguage.jsx";
+import { medicalKidneyTranslations as T } from "../../../utils/serviceTranslations.js";
 
 // Replace with your actual image path
 import kidneyCareImg from "../../../assets/images/Medical/kidney.jpg";
@@ -33,38 +35,64 @@ const DONATIONS = [
 const FAQS = [
     {
         question: "What kidney support do you provide?",
+        questionHi: "आप किस प्रकार की किडनी सहायता प्रदान करते हैं?",
         answer:
             "We provide financial assistance for dialysis sessions, essential medications, and pre-transplant diagnostic tests for patients in need.",
+        answerHi:
+            "हम डायलिसिस सत्र, आवश्यक दवाओं और प्रत्यारोपण-पूर्व नैदानिक परीक्षणों के लिए जरूरतमंद रोगियों को वित्तीय सहायता प्रदान करते हैं।",
     },
     {
         question: "How is my donation used for kidney patients?",
+        questionHi: "मेरा दान किडनी रोगियों के लिए कैसे उपयोग किया जाता है?",
         answer:
             "Donations directly cover the recurring costs of dialysis, which many underprivileged families cannot afford on a long-term basis.",
+        answerHi:
+            "दान सीधे डायलिसिस की आवर्ती लागत को कवर करता है, जो कई वंचित परिवार दीर्घकालिक आधार पर वहन नहीं कर सकते।",
     },
     {
         question: "Do you help with kidney transplant costs?",
+        questionHi: "क्या आप किडनी प्रत्यारोपण की लागत में मदद करते हैं?",
         answer:
             "While our primary focus is on ongoing dialysis support, we do provide partial financial assistance for life-saving transplant surgeries based on medical board approvals.",
+        answerHi:
+            "जबकि हमारा प्राथमिक ध्यान चल रहे डायलिसिस सहायता पर है, हम चिकित्सा बोर्ड की मंजूरी के आधार पर जीवन रक्षक प्रत्यारोपण सर्जरी के लिए आंशिक वित्तीय सहायता प्रदान करते हैं।",
     },
     {
         question: "How can I refer a patient for kidney care assistance?",
+        questionHi: "मैं किडनी देखभाल सहायता के लिए किसी मरीज को कैसे रेफर कर सकता हूँ?",
         answer:
             "Submit medical reports and financial status proof via our application form. Our team reviews all cases for eligibility and transparency.",
+        answerHi:
+            "हमारे आवेदन फॉर्म के माध्यम से चिकित्सा रिपोर्ट और वित्तीय स्थिति प्रमाण जमा करें। हमारी टीम पात्रता और पारदर्शिता के लिए सभी मामलों की समीक्षा करती है।",
     },
     {
         question: "Can I volunteer for kidney health awareness camps?",
+        questionHi: "क्या मैं किडनी स्वास्थ्य जागरूकता शिविरों के लिए स्वयंसेवा कर सकता हूँ?",
         answer:
             "Yes! We regularly hold awareness sessions on preventive kidney health and chronic kidney disease management. Reach out to join our volunteer base.",
+        answerHi:
+            "हाँ! हम नियमित रूप से निवारक किडनी स्वास्थ्य और क्रोनिक किडनी रोग प्रबंधन पर जागरूकता सत्र आयोजित करते हैं। हमारे स्वयंसेवक आधार में शामिल होने के लिए संपर्क करें।",
     },
 ];
 
 const STORY = [
-    "Chronic Kidney Disease (CKD) often requires regular dialysis, which is expensive and physically draining. For families with limited income, the recurring cost of treatment becomes an insurmountable barrier.",
-    "Our 'Kidney Care & Dialysis Support' initiative helps bridge this gap. We provide financial aid to ensure that patients do not miss their life-saving sessions due to lack of funds.",
-    "Your contribution makes a tangible difference. Every donation helps us cover treatment costs, ensuring that kidney patients can lead more stable and hopeful lives while they wait for long-term solutions."
+    {
+        en: "Chronic Kidney Disease (CKD) often requires regular dialysis, which is expensive and physically draining. For families with limited income, the recurring cost of treatment becomes an insurmountable barrier.",
+        hi: "क्रोनिक किडनी रोग (CKD) में अक्सर नियमित डायलिसिस की आवश्यकता होती है, जो महंगा और शारीरिक रूप से थकाऊ होता है। सीमित आय वाले परिवारों के लिए, उपचार की आवर्ती लागत एक दुर्गम बाधा बन जाती है।",
+    },
+    {
+        en: "Our 'Kidney Care & Dialysis Support' initiative helps bridge this gap. We provide financial aid to ensure that patients do not miss their life-saving sessions due to lack of funds.",
+        hi: "हमारी 'किडनी केयर एंड डायलिसिस सपोर्ट' पहल इस अंतर को पाटने में मदद करती है। हम वित्तीय सहायता प्रदान करते हैं ताकि यह सुनिश्चित हो सके कि मरीज धन की कमी के कारण अपने जीवन रक्षक सत्र न चूकें।",
+    },
+    {
+        en: "Your contribution makes a tangible difference. Every donation helps us cover treatment costs, ensuring that kidney patients can lead more stable and hopeful lives while they wait for long-term solutions.",
+        hi: "आपका योगदान एक ठोस अंतर लाता है। हर दान हमें उपचार की लागत को कवर करने में मदद करता है, यह सुनिश्चित करता है कि किडनी के मरीज दीर्घकालिक समाधान की प्रतीक्षा करते हुए अधिक स्थिर और आशापूर्ण जीवन जी सकें।",
+    },
 ];
 
 function KidneySupport() {
+    const { language } = useLanguage();
+    const t = (key) => translate(key, T, language);
     const [storyExpanded, setStoryExpanded] = useState(false);
     const [openFaq, setOpenFaq] = useState(null);
     const [shareLabel, setShareLabel] = useState("Share");
@@ -77,7 +105,7 @@ function KidneySupport() {
     );
     const modalDonations =
         donationModalType === "top" ? sortedDonations.slice(0, 10) : sortedDonations;
-    const modalTitle = donationModalType === "top" ? "Top Donations" : "All Donations";
+    const modalTitle = donationModalType === "top" ? t("topDonations") || "Top Donations" : t("allDonations") || "All Donations";
 
     useEffect(() => {
         window.scrollTo(0, 0);
@@ -139,12 +167,12 @@ function KidneySupport() {
                             </div>
 
                             <div className="kidney-campaign-body">
-                                <h1>Support Life-Saving Kidney Dialysis & Care</h1>
-                                <p className="kidney-campaign-org">by Arogya Care Foundation</p>
+                                <h1>{t("title")}</h1>
+                                <p className="kidney-campaign-org">{t("organization")}</p>
 
                                 <div className="kidney-campaign-amounts">
                                     <strong>Rs 4,20,000</strong>
-                                    <span>raised of Rs 8,00,000 goal</span>
+                                    <span>{language === 'hi' ? 'के' : 'raised of'} Rs 8,00,000 {language === 'hi' ? 'लक्ष्य' : 'goal'}</span>
                                 </div>
 
                                 <div className="kidney-campaign-progress" aria-hidden="true">
@@ -154,28 +182,28 @@ function KidneySupport() {
                                 <div className="kidney-campaign-stats">
                                     <div>
                                         <strong>275</strong>
-                                        <span>Donors</span>
+                                        <span>{language === 'hi' ? 'दानकर्ता' : 'Donors'}</span>
                                     </div>
                                     <div>
                                         <strong>12</strong>
-                                        <span>Days left</span>
+                                        <span>{language === 'hi' ? 'दिन बचे' : 'Days left'}</span>
                                     </div>
                                     <div>
                                         <strong>52%</strong>
-                                        <span>Funded</span>
+                                        <span>{language === 'hi' ? 'वित्त पोषित' : 'Funded'}</span>
                                     </div>
                                 </div>
 
                                 <div className="kidney-campaign-actions">
-                                    <Link to="/donate" className="kidney-campaign-btn kidney-campaign-btn-primary">
-                                        Donate Now
+                                    <Link to="/donate" state={{ serviceImage: kidneyCareImg, serviceTitle: t("title") }} className="kidney-campaign-btn kidney-campaign-btn-primary">
+                                        {t("donateNow")}
                                     </Link>
                                     <button
                                         type="button"
                                         className="kidney-campaign-btn kidney-campaign-btn-secondary"
                                         onClick={handleShare}
                                     >
-                                        {shareLabel}
+                                        {shareLabel === "Share" ? t("share") : shareLabel}
                                     </button>
                                 </div>
                             </div>
@@ -184,10 +212,10 @@ function KidneySupport() {
 
                     <div className="kidney-main-stack">
                         <section className="kidney-section-card">
-                            <h2>The Cause</h2>
+                            <h2>{language === 'hi' ? 'कहानी' : 'Story'}</h2>
                             <div className={`kidney-story-content ${storyExpanded ? "expanded" : ""}`}>
-                                {STORY.map((paragraph) => (
-                                    <p key={paragraph}>{paragraph}</p>
+                                {STORY.map((item, idx) => (
+                                    <p key={idx}>{language === 'hi' ? item.hi : item.en}</p>
                                 ))}
                             </div>
                             <button
@@ -195,14 +223,14 @@ function KidneySupport() {
                                 className="kidney-text-action"
                                 onClick={() => setStoryExpanded((current) => !current)}
                             >
-                                {storyExpanded ? "Read Less" : "Read More"}
+                                {storyExpanded ? (language === 'hi' ? 'कम दिखाएं' : 'Read Less') : (language === 'hi' ? 'और पढ़ें' : 'Read More')}
                             </button>
                         </section>
 
                         <section className="kidney-section-card">
                             <div className="kidney-section-head">
-                                <h2>Recent Donations</h2>
-                                <span>275 Donations</span>
+                                <h2>{language === 'hi' ? 'हाल के दान' : 'Recent Donations'}</h2>
+                                <span>275 {language === 'hi' ? 'दान' : 'Donations'}</span>
                             </div>
 
                             <div className="kidney-donation-list">
@@ -220,27 +248,27 @@ function KidneySupport() {
 
                             <div className="kidney-section-links">
                                 <button type="button" onClick={() => setDonationModalType("top")}>
-                                    View Top Donations
+                                    {language === 'hi' ? 'शीर्ष दान देखें' : 'View Top Donations'}
                                 </button>
                                 <button type="button" onClick={() => setDonationModalType("all")}>
-                                    View All Donations
+                                    {language === 'hi' ? 'सभी दान देखें' : 'View All Donations'}
                                 </button>
                             </div>
                         </section>
 
                         <section className="kidney-support-panel">
-                            <h2>Support this mission</h2>
-                            <p>Every small contribution ensures a dialysis session for someone in need.</p>
+                            <h2>{t("supportTitle")}</h2>
+                            <p>{t("supportDesc")}</p>
                             <div className="kidney-support-actions">
-                                <Link to="/donate" className="kidney-campaign-btn kidney-campaign-btn-primary">
-                                    Donate Now
+                                <Link to="/donate" state={{ serviceImage: kidneyCareImg, serviceTitle: t("title") }} className="kidney-campaign-btn kidney-campaign-btn-primary">
+                                    {t("donateNow")}
                                 </Link>
                                 <button
                                     type="button"
                                     className="kidney-campaign-btn kidney-campaign-btn-secondary"
                                     onClick={handleShare}
                                 >
-                                    Share
+                                    {t("share")}
                                 </button>
                             </div>
                         </section>
@@ -295,24 +323,24 @@ function KidneySupport() {
                         </section>
 
                         <section className="kidney-section-card kidney-faq-section">
-                            <h2>FAQs</h2>
-                            <p className="kidney-faq-intro">Common questions about this kidney dialysis initiative.</p>
+                            <h2>{t("faqTitle")}</h2>
+                            <p className="kidney-faq-intro">{t("faqIntro")}</p>
 
                             <div className="kidney-faq-list">
                                 {FAQS.map((faq, index) => {
                                     const isOpen = openFaq === index;
                                     return (
-                                        <article key={faq.question} className={`kidney-faq-item ${isOpen ? "open" : ""}`}>
+                                        <article key={index} className={`kidney-faq-item ${isOpen ? "open" : ""}`}>
                                             <button
                                                 type="button"
                                                 className="kidney-faq-question"
                                                 onClick={() => setOpenFaq(isOpen ? null : index)}
                                                 aria-expanded={isOpen}
                                             >
-                                                <span>{faq.question}</span>
+                                                <span>{language === 'hi' ? faq.questionHi : faq.question}</span>
                                                 <FaChevronDown aria-hidden="true" />
                                             </button>
-                                            {isOpen && <p className="kidney-faq-answer">{faq.answer}</p>}
+                                            {isOpen && <p className="kidney-faq-answer">{language === 'hi' ? faq.answerHi : faq.answer}</p>}
                                         </article>
                                     );
                                 })}

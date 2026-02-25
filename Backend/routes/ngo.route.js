@@ -1,13 +1,11 @@
 import express from "express";
 import multer from "multer";
 import upload from "../middlewares/uploadMiddleware.js";
-import { createNgo } from "../controllers/ngo.controller.js";
+import { createNgo, getAllNgos, getNgoById } from "../controllers/ngo.controller.js";
 
 const router = express.Router();
 const ngoUpload = upload.fields([
   { name: "registrationCertificate", maxCount: 1 },
-  { name: "ngoLogo", maxCount: 1 },
-  { name: "ngoCover", maxCount: 1 },
   { name: "certificate12A", maxCount: 1 },
   { name: "certificate80G", maxCount: 1 }
 ]);
@@ -44,5 +42,9 @@ router.post(
   handleNgoUpload,
   createNgo
 );
+
+// GET routes
+router.get("/", getAllNgos);
+router.get("/:id", getNgoById);
 
 export default router;

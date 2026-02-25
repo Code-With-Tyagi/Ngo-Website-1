@@ -17,6 +17,10 @@ import {
 
 } from "react-icons/fa";
 
+import { useLanguage, translate } from "../../../utils/useLanguage.jsx";
+
+import { orphanEducationTranslations } from "../../../utils/serviceTranslations.js";
+
 import orphanEducation from "../../../assets/images/orphanage/education.jpg";
 
 import "./education.css";
@@ -63,9 +67,11 @@ const FAQS = [
 
         question: "How does this education fundraiser help children?",
 
-        answer:
+        answer: "Funds are used for school fees, books, uniforms, tutoring support, and basic classroom needs for children living in orphanage care.",
 
-            "Funds are used for school fees, books, uniforms, tutoring support, and basic classroom needs for children living in orphanage care.",
+        questionHi: "यह शिक्षा धन संचय बच्चों को कैसे मदद करता है?",
+
+        answerHi: "धन को अनाथालय देखभाल में रहने वाले बच्चों के लिए स्कूल फीस, किताबें, वर्दी, ट्यूशन सहायता और बुनियादी कक्षा की जरूरतों के लिए उपयोग किया जाता है।",
 
     },
 
@@ -73,9 +79,11 @@ const FAQS = [
 
         question: "Is my donation secure?",
 
-        answer:
+        answer: "Yes. Donations are processed through secure payment channels and campaign-level records are maintained for accountability.",
 
-            "Yes. Donations are processed through secure payment channels and campaign-level records are maintained for accountability.",
+        questionHi: "क्या मेरा दान सुरक्षित है?",
+
+        answerHi: "हाँ। दान को सुरक्षित भुगतान चैनलों के माध्यम से संसाधित किया जाता है और जवाबदेही के लिए अभियान-स्तरीय रिकॉर्ड बनाए रखे जाते हैं।",
 
     },
 
@@ -83,9 +91,11 @@ const FAQS = [
 
         question: "Will I get donation confirmation?",
 
-        answer:
+        answer: "Yes. You receive confirmation as soon as your contribution is completed successfully.",
 
-            "Yes. You receive confirmation as soon as your contribution is completed successfully.",
+        questionHi: "क्या मुझे दान की पुष्टि मिलेगी?",
+
+        answerHi: "हाँ। आप अपना योगदान सफलतापूर्वक पूर्ण होते ही पुष्टि प्राप्त करते हैं।",
 
     },
 
@@ -93,9 +103,11 @@ const FAQS = [
 
         question: "Can I support this fundraiser monthly?",
 
-        answer:
+        answer: "Yes. You can return and donate again any time, or support related child welfare campaigns regularly.",
 
-            "Yes. You can return and donate again any time, or support related child welfare campaigns regularly.",
+        questionHi: "क्या मैं इस धन संचय को मासिक समर्थन कर सकता हूँ?",
+
+        answerHi: "हाँ। आप कभी भी वापस आ सकते हैं और फिर से दान कर सकते हैं, या संबंधित बाल कल्याण अभियानों को नियमित रूप से समर्थन कर सकते हैं।",
 
     },
 
@@ -103,9 +115,11 @@ const FAQS = [
 
         question: "Can I share this campaign with friends?",
 
-        answer:
+        answer: "Yes. You can use the Share button to quickly send this page to your contacts and help this cause reach more people.",
 
-            "Yes. You can use the Share button to quickly send this page to your contacts and help this cause reach more people.",
+        questionHi: "क्या मैं इस अभियान को दोस्तों के साथ साझा कर सकता हूँ?",
+
+        answerHi: "हाँ। आप इस पृष्ठ को अपने संपर्कों को जल्दी भेजने के लिए साझा बटन का उपयोग कर सकते हैं और इस कारण को अधिक लोगों तक पहुंचने में मदद कर सकते हैं।",
 
     },
 
@@ -115,17 +129,28 @@ const FAQS = [
 
 const STORY = [
 
-    "Children in orphanage care often have dreams of becoming teachers, doctors, artists, and leaders, but financial barriers keep interrupting their schooling.",
+    {
+        en: "Children in orphanage care often have dreams of becoming teachers, doctors, artists, and leaders, but financial barriers keep interrupting their schooling.",
+        hi: "अनाथालय देखभाल में बच्चों के अक्सर शिक्षक, डॉक्टर, कलाकार और नेता बनने के सपने होते हैं, लेकिन वित्तीय बाधाएं उनकी पढ़ाई में बाधा डालती हैं।",
+    },
 
-    "This education support fundraiser helps cover school enrollment, books, uniforms, and daily learning essentials so children can continue studying with confidence.",
+    {
+        en: "This education support fundraiser helps cover school enrollment, books, uniforms, and daily learning essentials so children can continue studying with confidence.",
+        hi: "यह शिक्षा सहायता धन संचय अभियान स्कूल नामांकन, किताबें, वर्दी और दैनिक सीखने की जरूरी चीजों को कवर करने में मदद करता है ताकि बच्चे आत्मविश्वास के साथ अध्ययन जारी रख सकें।",
+    },
 
-    "With your support, every child gets a fair chance to stay in school, learn consistently, and build a brighter and more secure future.",
+    {
+        en: "With your support, every child gets a fair chance to stay in school, learn consistently, and build a brighter and more secure future.",
+        hi: "आपके समर्थन से, हर बच्चे को स्कूल में रहने, लगातार सीखने और एक उज्जवल और अधिक सुरक्षित भविष्य बनाने का उचित मौका मिलता है।",
+    },
 
 ];
 
 
 
 function OrphanageEducationPage() {
+
+    const { language } = useLanguage();
 
     const [storyExpanded, setStoryExpanded] = useState(false);
 
@@ -151,7 +176,7 @@ function OrphanageEducationPage() {
 
         donationModalType === "top" ? sortedDonations.slice(0, 10) : sortedDonations;
 
-    const modalTitle = donationModalType === "top" ? "Top Donations" : "All Donations";
+    const modalTitle = donationModalType === "top" ? translate("topDonations", orphanEducationTranslations, language) : translate("allDonations", orphanEducationTranslations, language);
 
 
 
@@ -217,9 +242,9 @@ function OrphanageEducationPage() {
 
                 await navigator.share({
 
-                    title: "Orphanage Education Support",
+                    title: translate("title", orphanEducationTranslations, language),
 
-                    text: "Support education for children in orphanage care.",
+                    text: translate("supportDesc", orphanEducationTranslations, language),
 
                     url: pageUrl,
 
@@ -235,15 +260,15 @@ function OrphanageEducationPage() {
 
                 await navigator.clipboard.writeText(pageUrl);
 
-                setShareLabel("Link Copied");
+                setShareLabel(translate("linkCopied", orphanEducationTranslations, language));
 
-                window.setTimeout(() => setShareLabel("Share"), 1600);
+                window.setTimeout(() => setShareLabel(translate("share", orphanEducationTranslations, language)), 1600);
 
             }
 
         } catch {
 
-            setShareLabel("Share");
+            setShareLabel(translate("share", orphanEducationTranslations, language));
 
         }
 
@@ -331,7 +356,7 @@ function OrphanageEducationPage() {
 
                                 <div className="campaign-actions">
 
-                                    <Link to="/donate" className="campaign-btn campaign-btn-primary">
+                                    <Link to="/donate" state={{ serviceImage: orphanEducation, serviceTitle: "Help provide education support for children in orphanage care" }} className="campaign-btn campaign-btn-primary">
 
                                         Donate Now
 
@@ -365,13 +390,13 @@ function OrphanageEducationPage() {
 
                         <section className="education-section-card">
 
-                            <h2>Story</h2>
+                            <h2>{translate("story", orphanEducationTranslations, language)}</h2>
 
                             <div className={`story-content ${storyExpanded ? "expanded" : ""}`}>
 
-                                {STORY.map((paragraph) => (
+                                {STORY.map((paragraph, index) => (
 
-                                    <p key={paragraph}>{paragraph}</p>
+                                    <p key={index}>{language === "en" ? paragraph.en : paragraph.hi}</p>
 
                                 ))}
 
@@ -461,7 +486,7 @@ function OrphanageEducationPage() {
 
                             <div className="support-actions">
 
-                                <Link to="/donate" className="campaign-btn campaign-btn-primary">
+                                <Link to="/donate" state={{ serviceImage: orphanEducation, serviceTitle: "Help provide education support for children in orphanage care" }} className="campaign-btn campaign-btn-primary">
 
                                     Donate Now
 
@@ -597,7 +622,7 @@ function OrphanageEducationPage() {
 
                                     return (
 
-                                        <article key={faq.question} className={`faq-item ${isOpen ? "open" : ""}`}>
+                                        <article key={index} className={`faq-item ${isOpen ? "open" : ""}`}>
 
                                             <button
 
@@ -611,13 +636,13 @@ function OrphanageEducationPage() {
 
                                             >
 
-                                                <span>{faq.question}</span>
+                                                <span>{language === "en" ? faq.question : faq.questionHi}</span>
 
                                                 <FaChevronDown aria-hidden="true" />
 
                                             </button>
 
-                                            {isOpen && <p className="faq-answer">{faq.answer}</p>}
+                                            {isOpen && <p className="faq-answer">{language === "en" ? faq.answer : faq.answerHi}</p>}
 
                                         </article>
 

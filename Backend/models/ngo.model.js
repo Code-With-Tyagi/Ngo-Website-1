@@ -124,8 +124,6 @@ const ngoSchema = new mongoose.Schema({
   // Assuming you will upload files to cloud/server and store the string URL here
   documents: {
     registrationCertificate: { type: String, default: '' },
-    ngoLogo: { type: String, default: '' },
-    ngoCover: { type: String, default: '' },
     certificate12A: { type: String, default: '' },
     certificate80G: { type: String, default: '' }
   },

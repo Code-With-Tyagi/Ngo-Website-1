@@ -159,8 +159,6 @@ const AddNGOPage = () => {
     otherService: '',
     // Step 5 (Files)
     registrationCertificate: null,
-    ngoLogo: null,
-    ngoCover: null,
     certificate12A: null,
     certificate80G: null,
     agreeToTerms: false
@@ -280,7 +278,6 @@ const AddNGOPage = () => {
 
     if (step === 5) {
       if (!formData.registrationCertificate) newErrors.registrationCertificate = "Registration Certificate is required";
-      if (!formData.ngoLogo) newErrors.ngoLogo = "NGO Logo is required";
       if (!formData.certificate12A) newErrors.certificate12A = "12A Certificate is required";
       if (!formData.certificate80G) newErrors.certificate80G = "80G Certificate is required";
       if (!formData.agreeToTerms) newErrors.agreeToTerms = "You must agree to the terms";
@@ -318,7 +315,7 @@ const AddNGOPage = () => {
       // 2. Append standard text fields
       Object.keys(formData).forEach(key => {
         // Exclude files and array initially
-        const excludeList = ['services', 'registrationCertificate', 'ngoLogo', 'ngoCover', 'certificate12A', 'certificate80G'];
+        const excludeList = ['services', 'registrationCertificate', 'certificate12A', 'certificate80G'];
 
         if (!excludeList.includes(key)) {
           // Ensure we don't send null/undefined as strings
@@ -334,12 +331,6 @@ const AddNGOPage = () => {
       // 4. Append Files (Only if they exist)
       if (formData.registrationCertificate) {
         dataToSend.append('registrationCertificate', formData.registrationCertificate);
-      }
-      if (formData.ngoLogo) {
-        dataToSend.append('ngoLogo', formData.ngoLogo);
-      }
-      if (formData.ngoCover) {
-        dataToSend.append('ngoCover', formData.ngoCover);
       }
       if (formData.certificate12A) {
         dataToSend.append('certificate12A', formData.certificate12A);
@@ -629,22 +620,6 @@ const AddNGOPage = () => {
                     onFileSelect={handleFileSelect}
                     selectedFile={formData.registrationCertificate}
                     error={errors.registrationCertificate}
-                  />
-                  <FileUploadBox
-                    title="NGO Logo (High Res)"
-                    name="ngoLogo"
-                    required
-                    onFileSelect={handleFileSelect}
-                    selectedFile={formData.ngoLogo}
-                    error={errors.ngoLogo}
-                  />
-                  <FileUploadBox
-                    title="Cover Image (Landscape)"
-                    name="ngoCover"
-                    optional
-                    onFileSelect={handleFileSelect}
-                    selectedFile={formData.ngoCover}
-                    error={errors.ngoCover}
                   />
                   <FileUploadBox
                     title="12A Certificate"

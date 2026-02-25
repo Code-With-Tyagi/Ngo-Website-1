@@ -7,6 +7,8 @@ import {
   FaShieldAlt,
   FaUserCircle,
 } from "react-icons/fa";
+import { useLanguage, translate } from "../../../utils/useLanguage.jsx";
+import { elderMealTranslations as T } from "../../../utils/serviceTranslations.js";
 
 // Make sure to add a relevant image to this path in your project
 import elderlyMealCare from "../../../assets/images/elderly/food.jpg";
@@ -32,39 +34,46 @@ const DONATIONS = [
 const FAQS = [
   {
     question: "What kind of meals are provided to the elderly?",
-    answer:
-      "We provide freshly cooked, soft, and easy-to-digest vegetarian meals tailored for old age. Special care is taken to ensure the food is low in sodium and diabetic-friendly.",
+    questionHi: "बुजुर्गों को किस प्रकार का भोजन प्रदान किया जाता है?",
+    answer: "We provide freshly cooked, soft, and easy-to-digest vegetarian meals tailored for old age. Special care is taken to ensure the food is low in sodium and diabetic-friendly.",
+    answerHi: "हम बुजुर्गों के लिए ताजा पका हुआ, नरम और आसानी से पचने वाला शाकाहारी भोजन प्रदान करते हैं। भोजन कम सोडियम और मधुमेह अनुकूल सुनिश्चित करने के लिए विशेष ध्यान रखा जाता है।",
   },
   {
     question: "Is my donation secure?",
-    answer:
-      "Yes. Donations are processed through secure payment channels, and we maintain strict campaign-level records for full accountability.",
+    questionHi: "क्या मेरा दान सुरक्षित है?",
+    answer: "Yes. Donations are processed through secure payment channels, and we maintain strict campaign-level records for full accountability.",
+    answerHi: "हाँ। दान को सुरक्षित भुगतान चैनलों के माध्यम से संसाधित किया जाता है और पूर्ण जवाबदेही के लिए अभियान-स्तरीय रिकॉर्ड बनाए रखे जाते हैं।",
   },
   {
     question: "Will I get a tax exemption receipt?",
-    answer:
-      "Yes. Upon successful donation, you will receive an 80G tax exemption receipt on your registered email ID.",
+    questionHi: "क्या मुझे कर छूट रसीद मिलेगी?",
+    answer: "Yes. Upon successful donation, you will receive an 80G tax exemption receipt on your registered email ID.",
+    answerHi: "हाँ। सफल दान के बाद, आपको अपनी पंजीकृत ईमेल आईडी पर 80G कर छूट रसीद प्राप्त होगी।",
   },
   {
     question: "Can I sponsor meals for a specific day (like a birthday)?",
-    answer:
-      "Yes. You can choose to sponsor a full day's meal for the shelter on special occasions. Please contact our trust directly after making the donation.",
+    questionHi: "क्या मैं किसी विशेष दिन (जैसे जन्मदिन) के लिए भोजन प्रायोजित कर सकता हूँ?",
+    answer: "Yes. You can choose to sponsor a full day's meal for the shelter on special occasions. Please contact our trust directly after making the donation.",
+    answerHi: "हाँ। आप विशेष अवसरों पर आश्रय के लिए पूरे दिन का भोजन प्रायोजित कर सकते हैं। दान करने के बाद सीधे हमारे ट्रस्ट से संपर्क करें।",
   },
   {
     question: "Can I share this campaign with friends?",
-    answer:
-      "Absolutely! Use the Share button to send this page to your family and friends via WhatsApp, social media, or email to help us reach more people.",
+    questionHi: "क्या मैं इस अभियान को दोस्तों के साथ साझा कर सकता हूँ?",
+    answer: "Absolutely! Use the Share button to send this page to your family and friends via WhatsApp, social media, or email to help us reach more people.",
+    answerHi: "बिल्कुल! इस पृष्ठ को अपने परिवार और दोस्तों को व्हाट्सएप, सोशल मीडिया या ईमेल के माध्यम से भेजने के लिए शेयर बटन का उपयोग करें।",
   },
 ];
 
 const STORY = [
-  "In the twilight years of their lives, many elderly individuals find themselves abandoned, struggling not just with loneliness, but with the basic need for a warm, nutritious meal.",
-  "Our Daily Meal Care initiative ensures that senior citizens living in our shelter, as well as destitute elders on the streets, receive two fresh, hot, and healthy meals every day.",
-  "With advancing age, proper nutrition becomes critical for survival and managing age-related illnesses. Your support helps us buy groceries, cook specialized meals, and serve them with the dignity and love they deserve.",
-  "Help us ensure that no elderly person in our care has to go to sleep on an empty stomach. Your contribution is a direct serving of hope and warmth."
+  { en: "In the twilight years of their lives, many elderly individuals find themselves abandoned, struggling not just with loneliness, but with the basic need for a warm, nutritious meal.", hi: "अपने जीवन के अंतिम वर्षों में, कई बुजुर्ग खुद को परित्यक्त पाते हैं, न केवल अकेलेपन से बल्कि गर्म, पौष्टिक भोजन की बुनियादी जरूरत से जूझ रहे हैं।" },
+  { en: "Our Daily Meal Care initiative ensures that senior citizens living in our shelter, as well as destitute elders on the streets, receive two fresh, hot, and healthy meals every day.", hi: "हमारी दैनिक भोजन देखभाल पहल सुनिश्चित करती है कि हमारे आश्रय में रहने वाले वरिष्ठ नागरिकों और सड़कों पर निराश्रित बुजुर्गों को हर दिन दो ताजे, गर्म और स्वस्थ भोजन मिलें।" },
+  { en: "With advancing age, proper nutrition becomes critical for survival and managing age-related illnesses. Your support helps us buy groceries, cook specialized meals, and serve them with the dignity and love they deserve.", hi: "बढ़ती उम्र के साथ, उचित पोषण जीवित रहने और उम्र संबंधी बीमारियों के प्रबंधन के लिए महत्वपूर्ण हो जाता है। आपका समर्थन हमें किराने का सामान खरीदने, विशेष भोजन बनाने और उन्हें सम्मान और प्यार से परोसने में मदद करता है।" },
+  { en: "Help us ensure that no elderly person in our care has to go to sleep on an empty stomach. Your contribution is a direct serving of hope and warmth.", hi: "हमें यह सुनिश्चित करने में मदद करें कि हमारी देखभाल में कोई भी बुजुर्ग खाली पेट सोने को मजबूर न हो। आपका योगदान आशा और गर्मजोशी की सीधी सेवा है।" },
 ];
 
 function ElderlyMealCarePage() {
+  const { language } = useLanguage();
+  const t = (key) => translate(key, T, language);
   const [storyExpanded, setStoryExpanded] = useState(false);
   const [openFaq, setOpenFaq] = useState(null);
   const [shareLabel, setShareLabel] = useState("Share");
@@ -77,7 +86,7 @@ function ElderlyMealCarePage() {
   );
   const modalDonations =
     donationModalType === "top" ? sortedDonations.slice(0, 10) : sortedDonations;
-  const modalTitle = donationModalType === "top" ? "Top Donations" : "All Donations";
+  const modalTitle = donationModalType === "top" ? t("topDonations") || "Top Donations" : t("allDonations") || "All Donations";
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -139,12 +148,12 @@ function ElderlyMealCarePage() {
               </div>
 
               <div className="campaign-body">
-                <h1>Provide daily nutritious meals for abandoned elderly</h1>
-                <p className="campaign-org">by Silver Years Foundation</p>
+                <h1>{t("title")}</h1>
+                <p className="campaign-org">{t("organization")}</p>
 
                 <div className="campaign-amounts">
                   <strong>Rs 1,85,000</strong>
-                  <span>raised of Rs 4,00,000 goal</span>
+                  <span>{t("raisedOf") || "raised of"} Rs 4,00,000 {t("goal") || "goal"}</span>
                 </div>
 
                 <div className="campaign-progress" aria-hidden="true">
@@ -154,28 +163,28 @@ function ElderlyMealCarePage() {
                 <div className="campaign-stats">
                   <div>
                     <strong>205</strong>
-                    <span>Donors</span>
+                    <span>{t("donors") || "Donors"}</span>
                   </div>
                   <div>
                     <strong>21</strong>
-                    <span>Days left</span>
+                    <span>{t("daysLeft") || "Days left"}</span>
                   </div>
                   <div>
                     <strong>46%</strong>
-                    <span>Funded</span>
+                    <span>{t("funded") || "Funded"}</span>
                   </div>
                 </div>
 
                 <div className="campaign-actions">
-                  <Link to="/donate" className="campaign-btn campaign-btn-primary">
-                    Donate Now
+                  <Link to="/donate" state={{ serviceImage: elderlyMealCare, serviceTitle: t("title") }} className="campaign-btn campaign-btn-primary">
+                    {t("donateNow")}
                   </Link>
                   <button
                     type="button"
                     className="campaign-btn campaign-btn-secondary"
                     onClick={handleShare}
                   >
-                    {shareLabel}
+                    {shareLabel === "Share" ? t("share") : shareLabel}
                   </button>
                 </div>
               </div>
@@ -184,10 +193,10 @@ function ElderlyMealCarePage() {
 
           <div className="meal-care-main-stack">
             <section className="meal-care-section-card">
-              <h2>Story</h2>
+              <h2>{language === 'hi' ? 'कहानी' : 'Story'}</h2>
               <div className={`story-content ${storyExpanded ? "expanded" : ""}`}>
-                {STORY.map((paragraph) => (
-                  <p key={paragraph}>{paragraph}</p>
+                {STORY.map((item, idx) => (
+                  <p key={idx}>{language === 'hi' ? item.hi : item.en}</p>
                 ))}
               </div>
               <button
@@ -195,14 +204,14 @@ function ElderlyMealCarePage() {
                 className="text-action"
                 onClick={() => setStoryExpanded((current) => !current)}
               >
-                {storyExpanded ? "Read Less" : "Read More"}
+                {storyExpanded ? (language === 'hi' ? 'कम दिखाएं' : 'Read Less') : (language === 'hi' ? 'और पढ़ें' : 'Read More')}
               </button>
             </section>
 
             <section className="meal-care-section-card">
               <div className="section-head">
-                <h2>Recent Donations</h2>
-                <span>205 Donations</span>
+                <h2>{language === 'hi' ? 'हाल के दान' : 'Recent Donations'}</h2>
+                <span>205 {language === 'hi' ? 'दान' : 'Donations'}</span>
               </div>
 
               <div className="donation-list">
@@ -220,27 +229,27 @@ function ElderlyMealCarePage() {
 
               <div className="section-links">
                 <button type="button" onClick={() => setDonationModalType("top")}>
-                  View Top Donations
+                  {t("topDonations") || "Top Donations"}
                 </button>
                 <button type="button" onClick={() => setDonationModalType("all")}>
-                  View All Donations
+                  {t("allDonations") || "All Donations"}
                 </button>
               </div>
             </section>
 
             <section className="support-panel">
-              <h2>Support the fundraiser</h2>
-              <p>Every small share and donation helps serve a warm plate of food.</p>
+              <h2>{t("supportTitle") || "Support the fundraiser"}</h2>
+              <p>{t("supportDesc") || "Every small share and donation helps serve a warm plate of food."}</p>
               <div className="support-actions">
-                <Link to="/donate" className="campaign-btn campaign-btn-primary">
-                  Donate Now
+                <Link to="/donate" state={{ serviceImage: elderlyMealCare, serviceTitle: t("title") }} className="campaign-btn campaign-btn-primary">
+                  {t("donateNow")}
                 </Link>
                 <button
                   type="button"
                   className="campaign-btn campaign-btn-secondary"
                   onClick={handleShare}
                 >
-                  Share
+                  {t("share")}
                 </button>
               </div>
             </section>
@@ -293,24 +302,24 @@ function ElderlyMealCarePage() {
             </section>
 
             <section className="meal-care-section-card faq-section">
-              <h2>FAQs</h2>
-              <p className="faq-intro">Everything you need to know before you donate.</p>
+              <h2>{language === 'hi' ? 'अक्सर पूछे जाने वाले प्रश्न' : 'FAQs'}</h2>
+              <p className="faq-intro">{language === 'hi' ? 'दान करने से पहले आपको जो कुछ जानने की जरूरत है।' : 'Everything you need to know before you donate.'}</p>
 
               <div className="faq-list">
                 {FAQS.map((faq, index) => {
                   const isOpen = openFaq === index;
                   return (
-                    <article key={faq.question} className={`faq-item ${isOpen ? "open" : ""}`}>
+                    <article key={index} className={`faq-item ${isOpen ? "open" : ""}`}>
                       <button
                         type="button"
                         className="faq-question"
                         onClick={() => setOpenFaq(isOpen ? null : index)}
                         aria-expanded={isOpen}
                       >
-                        <span>{faq.question}</span>
+                        <span>{language === 'hi' ? faq.questionHi : faq.question}</span>
                         <FaChevronDown aria-hidden="true" />
                       </button>
-                      {isOpen && <p className="faq-answer">{faq.answer}</p>}
+                      {isOpen && <p className="faq-answer">{language === 'hi' ? faq.answerHi : faq.answer}</p>}
                     </article>
                   );
                 })}

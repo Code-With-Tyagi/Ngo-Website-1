@@ -4,45 +4,37 @@ const contactSchema = new mongoose.Schema(
   {
     name: {
       type: String,
-      required: [true, 'Full name is required'],
+      required: [true, 'Name is required'],
       trim: true,
       minlength: [2, 'Name must be at least 2 characters'],
       maxlength: [100, 'Name cannot exceed 100 characters']
     },
     email: {
       type: String,
-      required: [true, 'Email address is required'],
+      required: [true, 'Email is required'],
       trim: true,
       lowercase: true,
-      match: [
-        /\S+@\S+\.\S+/,
-        'Please enter a valid email address'
-      ]
+      match: [/^\S+@\S+\.\S+$/, 'Please enter a valid email address']
+    },
+    phone: {
+      type: String,
+      trim: true,
+      match: [/^[0-9]{10}$/, 'Please enter a valid 10-digit phone number']
     },
     subject: {
       type: String,
       required: [true, 'Subject is required'],
       trim: true,
-      // If you want to restrict subjects to ONLY what is in your dropdown, uncomment the enum below:
-      // enum: ['I want to Volunteer', 'Donation / Tax Receipt Query', 'Corporate CSR Partnership', 'I need assistance (Beneficiary)', 'General Inquiry', 'Support Request', 'Job Application']
+      minlength: [5, 'Subject must be at least 5 characters'],
+      maxlength: [200, 'Subject cannot exceed 200 characters']
     },
     message: {
       type: String,
       required: [true, 'Message is required'],
-      trim: true
+      trim: true,
+      minlength: [10, 'Message must be at least 10 characters'],
+      maxlength: [2000, 'Message cannot exceed 2000 characters']
     },
-    privacyAccepted: {
-      type: Boolean,
-      required: [true, 'Privacy policy must be accepted'],
-      default: false,
-      validate: {
-        validator: function(v) {
-          return v === true;
-        },
-        message: 'You must agree to the privacy policy'
-      }
-    },
-    // Internal use: To track if your team has replied to this person
     status: {
       type: String,
       enum: ['New', 'In Progress', 'Resolved', 'Spam'],
@@ -50,7 +42,7 @@ const contactSchema = new mongoose.Schema(
     }
   },
   {
-    timestamps: true, // Automatically adds 'createdAt' and 'updatedAt'
+    timestamps: true,
     collection: "contacts"
   }
 );

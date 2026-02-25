@@ -20,7 +20,7 @@ const INITIAL_FORM_DATA = {
   fullName: "", email: "", phone: "", dob: "", gender: "", city: "", state: "",
   interests: [], mode: "", availability: "", duration: "",
   education: "", occupation: "", skills: "", experience: "",
-  idType: "", idNumber: "", idImage: null, emergencyName: "", emergencyPhone: "", bgCheck: false,
+  idType: "", idNumber: "", emergencyName: "", emergencyPhone: "", bgCheck: false,
   motivation: "", declaration: false
 };
 
@@ -402,14 +402,143 @@ function Volunteer() {
   const [applicationLocked, setApplicationLocked] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
 
+  // --- KYC Verification State ---
+  const [idVerified, setIdVerified] = useState(false);
+  const [kycLoading, setKycLoading] = useState(false);
+  const [kycMessage, setKycMessage] = useState({ type: "", text: "" });
+  // Aadhaar OTP flow
+  const [aadhaarRefId, setAadhaarRefId] = useState("");
+  const [otpSent, setOtpSent] = useState(false);
+  const [otpValue, setOtpValue] = useState("");
+  // PAN extra fields
+  const [panName, setPanName] = useState("");
+  const [panDob, setPanDob] = useState("");
+
+  const resetKycState = () => {
+    setIdVerified(false);
+    setKycLoading(false);
+    setKycMessage({ type: "", text: "" });
+    setAadhaarRefId("");
+    setOtpSent(false);
+    setOtpValue("");
+    setPanName("");
+    setPanDob("");
+  };
+
+  // --- Aadhaar: Request OTP ---
+  const handleAadhaarSendOtp = async () => {
+    const raw = formData.idNumber.replace(/\s/g, "");
+    if (!/^[2-9]\d{11}$/.test(raw)) {
+      setKycMessage({ type: "error", text: "Enter a valid 12-digit Aadhaar number first." });
+      return;
+    }
+    const token = localStorage.getItem("token");
+    if (!token) { setKycMessage({ type: "error", text: "Please log in first." }); return; }
+
+    setKycLoading(true);
+    setKycMessage({ type: "", text: "" });
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/kyc/aadhaar-otp`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        credentials: "include",
+        body: JSON.stringify({ aadhaarNumber: raw })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setAadhaarRefId(data.data?.reference_id || "");
+        setOtpSent(true);
+        setKycMessage({ type: "success", text: "OTP sent to your Aadhaar-linked mobile number." });
+      } else {
+        setKycMessage({ type: "error", text: data.message || "Failed to send OTP." });
+      }
+    } catch {
+      setKycMessage({ type: "error", text: "Network error. Please try again." });
+    } finally {
+      setKycLoading(false);
+    }
+  };
+
+  // --- Aadhaar: Verify OTP ---
+  const handleAadhaarVerifyOtp = async () => {
+    if (!otpValue || otpValue.length < 4) {
+      setKycMessage({ type: "error", text: "Please enter the OTP." });
+      return;
+    }
+    const token = localStorage.getItem("token");
+    setKycLoading(true);
+    setKycMessage({ type: "", text: "" });
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/kyc/verify-aadhaar`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        credentials: "include",
+        body: JSON.stringify({ reference_id: aadhaarRefId, otp: otpValue })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setIdVerified(true);
+        setKycMessage({ type: "success", text: "Aadhaar verified successfully! ✅" });
+      } else {
+        setKycMessage({ type: "error", text: data.message || "OTP verification failed." });
+      }
+    } catch {
+      setKycMessage({ type: "error", text: "Network error. Please try again." });
+    } finally {
+      setKycLoading(false);
+    }
+  };
+
+  // --- PAN: Verify ---
+  const handlePanVerify = async () => {
+    const pan = formData.idNumber.trim().toUpperCase();
+    if (!/^[A-Z]{5}[0-9]{4}[A-Z]$/.test(pan)) {
+      setKycMessage({ type: "error", text: "Enter a valid PAN number first." });
+      return;
+    }
+    if (!panName.trim()) {
+      setKycMessage({ type: "error", text: "Enter your name as per PAN card." });
+      return;
+    }
+    if (!panDob) {
+      setKycMessage({ type: "error", text: "Enter your date of birth as per PAN card." });
+      return;
+    }
+    const token = localStorage.getItem("token");
+    if (!token) { setKycMessage({ type: "error", text: "Please log in first." }); return; }
+
+    // Convert from YYYY-MM-DD to DD/MM/YYYY format expected by Sandbox API
+    const [y, m, d] = panDob.split("-");
+    const dobFormatted = `${d}/${m}/${y}`;
+
+    setKycLoading(true);
+    setKycMessage({ type: "", text: "" });
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/kyc/verify-pan`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        credentials: "include",
+        body: JSON.stringify({ pan, nameAsPerPan: panName.trim(), dateOfBirth: dobFormatted })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setIdVerified(true);
+        setKycMessage({ type: "success", text: "PAN verified successfully! ✅" });
+      } else {
+        setKycMessage({ type: "error", text: data.message || "PAN verification failed. Check your details." });
+      }
+    } catch {
+      setKycMessage({ type: "error", text: "Network error. Please try again." });
+    } finally {
+      setKycLoading(false);
+    }
+  };
+
   // --- HANDLERS ---
   const handleChange = (e) => {
     const { name, value, type, checked, files } = e.target;
 
-    if (type === "file") {
-      const file = files && files.length > 0 ? files[0] : null;
-      setFormData({ ...formData, [name]: file });
-    } else if (type === "checkbox" && name === "interests") {
+    if (type === "checkbox" && name === "interests") {
       let updatedInterests = [...formData.interests];
       if (checked) {
         updatedInterests.push(value);
@@ -419,6 +548,25 @@ function Volunteer() {
       setFormData({ ...formData, interests: updatedInterests });
     } else if (type === "checkbox") {
       setFormData({ ...formData, [name]: checked });
+    } else if (name === "idType") {
+      // Reset idNumber and KYC state when user changes ID type
+      setFormData({ ...formData, idType: value, idNumber: "" });
+      setErrors((prev) => ({ ...prev, idType: "", idNumber: "", submit: "" }));
+      resetKycState();
+      return;
+    } else if (name === "idNumber") {
+      // If user edits idNumber after verification, reset verification
+      if (idVerified) resetKycState();
+      // Format based on selected ID type
+      let formatted = value;
+      if (formData.idType === "Aadhaar") {
+        // Allow only digits, max 12
+        formatted = value.replace(/\D/g, "").slice(0, 12);
+      } else if (formData.idType === "PAN") {
+        // Uppercase alphanumeric, max 10, enforce ABCDE1234F pattern as user types
+        formatted = value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 10);
+      }
+      setFormData({ ...formData, [name]: formatted });
     } else {
       setFormData({ ...formData, [name]: value });
     }
@@ -443,16 +591,22 @@ function Volunteer() {
     if (formData.interests.length === 0) newErrors.interests = "Select at least one area of interest";
     if (!formData.motivation.trim()) newErrors.motivation = "Please tell us why you want to join";
     if (!formData.idType) newErrors.idType = "ID Type is required";
-    if (!formData.idNumber.trim()) newErrors.idNumber = "ID Number is required";
-    if (!formData.idImage) newErrors.idImage = "ID proof is required";
-
-    if (formData.idImage) {
-      const allowedTypes = ["image/jpeg", "image/png", "application/pdf"];
-      if (!allowedTypes.includes(formData.idImage.type)) {
-        newErrors.idImage = "Only JPG, PNG or PDF files are allowed";
-      } else if (formData.idImage.size > 5 * 1024 * 1024) {
-        newErrors.idImage = "ID proof must be up to 5MB";
+    if (!formData.idNumber.trim()) {
+      newErrors.idNumber = "ID Number is required";
+    } else if (formData.idType === "Aadhaar") {
+      // Aadhaar: exactly 12 digits, must not start with 0 or 1
+      if (!/^[2-9]\d{11}$/.test(formData.idNumber.trim())) {
+        newErrors.idNumber = "Enter a valid 12-digit Aadhaar number (must not start with 0 or 1)";
       }
+    } else if (formData.idType === "PAN") {
+      // PAN: 5 letters + 4 digits + 1 letter (e.g., ABCDE1234F)
+      if (!/^[A-Z]{5}[0-9]{4}[A-Z]$/.test(formData.idNumber.trim())) {
+        newErrors.idNumber = "Enter a valid PAN number (e.g., ABCDE1234F)";
+      }
+    }
+
+    if (!idVerified) {
+      newErrors.idVerify = "Please verify your ID before submitting";
     }
 
     if (!formData.declaration) newErrors.declaration = "You must agree to the terms";
@@ -462,33 +616,27 @@ function Volunteer() {
   };
 
   const buildVolunteerPayload = () => {
-    const payload = new FormData();
-
-    payload.append("fullName", formData.fullName.trim());
-    payload.append("email", formData.email.trim().toLowerCase());
-    payload.append("phone", formData.phone.trim());
-    payload.append("dob", formData.dob);
-    payload.append("city", formData.city.trim());
-    payload.append("state", formData.state);
-    formData.interests.forEach((interest) => payload.append("interests", interest));
-    payload.append("mode", formData.mode || "On-site");
-    payload.append("availability", formData.availability || "Flexible");
-    payload.append("occupation", formData.occupation.trim());
-    payload.append("education", formData.education || "");
-    payload.append("skills", formData.skills.trim());
-    payload.append("idType", formData.idType);
-    payload.append("idNumber", formData.idNumber.trim());
-    payload.append("emergencyName", formData.emergencyName.trim());
-    payload.append("emergencyPhone", formData.emergencyPhone.trim());
-    payload.append("bgCheck", String(Boolean(formData.bgCheck)));
-    payload.append("motivation", formData.motivation.trim());
-    payload.append("declaration", String(Boolean(formData.declaration)));
-
-    if (formData.idImage) {
-      payload.append("idImage", formData.idImage);
-    }
-
-    return payload;
+    return {
+      fullName: formData.fullName.trim(),
+      email: formData.email.trim().toLowerCase(),
+      phone: formData.phone.trim(),
+      dob: formData.dob,
+      city: formData.city.trim(),
+      state: formData.state,
+      interests: formData.interests,
+      mode: formData.mode || "On-site",
+      availability: formData.availability || "Flexible",
+      occupation: formData.occupation.trim(),
+      education: formData.education || "",
+      skills: formData.skills.trim(),
+      idType: formData.idType,
+      idNumber: formData.idNumber.trim(),
+      emergencyName: formData.emergencyName.trim(),
+      emergencyPhone: formData.emergencyPhone.trim(),
+      bgCheck: Boolean(formData.bgCheck),
+      motivation: formData.motivation.trim(),
+      declaration: Boolean(formData.declaration)
+    };
   };
 
   const handleSubmit = async (e) => {
@@ -522,10 +670,11 @@ function Volunteer() {
       const res = await fetch(`${API_BASE_URL}/api/volunteer/apply`, {
         method: "POST",
         headers: {
+          "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
         credentials: "include",
-        body: payload,
+        body: JSON.stringify(payload),
       });
 
       const data = await res.json().catch(() => ({}));
@@ -535,6 +684,7 @@ function Volunteer() {
         setSuccessMessage(data.message || "Volunteer application submitted successfully.");
         setFormData(INITIAL_FORM_DATA);
         setErrors({});
+        resetKycState();
         document.getElementById("apply-form")?.scrollIntoView({ behavior: "smooth" });
         return;
       }
@@ -868,31 +1018,206 @@ function Volunteer() {
                   <div style={styles.inputGroup}>
                     <label style={styles.label}>ID Type *</label>
                     <select style={{ ...styles.select, borderColor: errors.idType ? 'red' : '#ddd' }}
-                      name="idType" value={formData.idType} onChange={handleChange}>
+                      name="idType" value={formData.idType} onChange={handleChange} disabled={idVerified}>
                       <option value="">Select ID Type</option>
                       <option value="Aadhaar">Aadhaar Card</option>
                       <option value="PAN">PAN Card</option>
-                      <option value="Passport">Passport</option>
-                      <option value="VoterID">Voter ID</option>
                     </select>
                     {errors.idType && <span style={styles.errorMsg}>{errors.idType}</span>}
                   </div>
                   <div style={styles.inputGroup}>
-                    <label style={styles.label}>ID Number *</label>
-                    <input style={{ ...styles.input, borderColor: errors.idNumber ? 'red' : '#ddd' }}
-                      name="idNumber" value={formData.idNumber} onChange={handleChange} placeholder="XXXX-XXXX-XXXX" />
+                    <label style={styles.label}>
+                      {formData.idType === "Aadhaar" ? "Aadhaar Number *" :
+                       formData.idType === "PAN" ? "PAN Number *" :
+                       "ID Number *"}
+                    </label>
+                    <input
+                      style={{ ...styles.input, borderColor: errors.idNumber ? 'red' : '#ddd', letterSpacing: formData.idType === 'Aadhaar' ? '2px' : formData.idType === 'PAN' ? '1.5px' : 'normal' }}
+                      name="idNumber"
+                      value={formData.idType === "Aadhaar" && formData.idNumber.length > 0
+                        ? formData.idNumber.replace(/(\d{4})(?=\d)/g, "$1 ").trim()
+                        : formData.idNumber}
+                      onChange={(e) => {
+                        const raw = e.target.value.replace(/\s/g, "");
+                        handleChange({ target: { name: "idNumber", value: raw, type: "text" } });
+                      }}
+                      placeholder={
+                        formData.idType === "Aadhaar" ? "XXXX XXXX XXXX" :
+                        formData.idType === "PAN" ? "ABCDE1234F" :
+                        "Select ID type first"
+                      }
+                      maxLength={
+                        formData.idType === "Aadhaar" ? 14 :
+                        formData.idType === "PAN" ? 10 :
+                        undefined
+                      }
+                      disabled={!formData.idType || idVerified}
+                    />
+                    {formData.idType === "Aadhaar" && !idVerified && (
+                      <small style={{ color: '#666', marginTop: '4px', fontSize: '0.78rem' }}>12-digit Aadhaar number (must not start with 0 or 1)</small>
+                    )}
+                    {formData.idType === "PAN" && !idVerified && (
+                      <small style={{ color: '#666', marginTop: '4px', fontSize: '0.78rem' }}>Format: 5 letters + 4 digits + 1 letter (e.g., ABCDE1234F)</small>
+                    )}
                     {errors.idNumber && <span style={styles.errorMsg}>{errors.idNumber}</span>}
                   </div>
                 </div>
-                <div style={styles.row}>
-                  <div style={styles.inputGroup}>
-                    <label style={styles.label}>Upload ID Proof (Image/PDF)</label>
-                    <input type="file" name="idImage" accept="image/*,application/pdf" onChange={handleChange}
-                      style={{ ...styles.input, paddingTop: '10px', borderColor: errors.idImage ? 'red' : '#ddd' }} />
-                    <small style={{ color: '#666', marginTop: '5px', fontSize: '0.8rem' }}>Max size: 5MB. Formats: JPG, PNG, PDF.</small>
-                    {errors.idImage && <span style={styles.errorMsg}>{errors.idImage}</span>}
+
+                {/* ─── Aadhaar OTP Verification Flow ─── */}
+                {formData.idType === "Aadhaar" && !idVerified && (
+                  <div style={{ padding: '16px', backgroundColor: '#f0f7ff', borderRadius: '10px', marginTop: '8px', border: '1px solid #bfdbfe' }}>
+                    <p style={{ margin: '0 0 12px', fontWeight: '600', color: '#1e40af', fontSize: '0.9rem' }}>
+                      🔐 Aadhaar OTP Verification
+                    </p>
+                    {!otpSent ? (
+                      <div>
+                        <p style={{ margin: '0 0 10px', color: '#475569', fontSize: '0.84rem' }}>
+                          An OTP will be sent to your Aadhaar-linked mobile number for verification.
+                        </p>
+                        <button
+                          type="button"
+                          onClick={handleAadhaarSendOtp}
+                          disabled={kycLoading || formData.idNumber.length < 12}
+                          style={{
+                            padding: '10px 24px', backgroundColor: formData.idNumber.length < 12 ? '#94a3b8' : '#2563eb',
+                            color: '#fff', border: 'none', borderRadius: '8px', fontWeight: '600',
+                            cursor: formData.idNumber.length < 12 ? 'not-allowed' : 'pointer', fontSize: '0.88rem',
+                            opacity: kycLoading ? 0.7 : 1
+                          }}
+                        >
+                          {kycLoading ? "Sending OTP..." : "Send OTP"}
+                        </button>
+                      </div>
+                    ) : (
+                      <div>
+                        <p style={{ margin: '0 0 10px', color: '#475569', fontSize: '0.84rem' }}>
+                          Enter the OTP sent to your Aadhaar-linked mobile number.
+                        </p>
+                        <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+                          <input
+                            type="text"
+                            value={otpValue}
+                            onChange={(e) => setOtpValue(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                            placeholder="Enter OTP"
+                            maxLength={6}
+                            style={{
+                              ...styles.input, width: '160px', letterSpacing: '4px', textAlign: 'center',
+                              fontSize: '1.1rem', fontWeight: '600'
+                            }}
+                          />
+                          <button
+                            type="button"
+                            onClick={handleAadhaarVerifyOtp}
+                            disabled={kycLoading || otpValue.length < 4}
+                            style={{
+                              padding: '10px 24px', backgroundColor: otpValue.length < 4 ? '#94a3b8' : '#16a34a',
+                              color: '#fff', border: 'none', borderRadius: '8px', fontWeight: '600',
+                              cursor: otpValue.length < 4 ? 'not-allowed' : 'pointer', fontSize: '0.88rem',
+                              opacity: kycLoading ? 0.7 : 1
+                            }}
+                          >
+                            {kycLoading ? "Verifying..." : "Verify OTP"}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={handleAadhaarSendOtp}
+                            disabled={kycLoading}
+                            style={{
+                              padding: '10px 16px', backgroundColor: 'transparent', color: '#2563eb',
+                              border: '1px solid #2563eb', borderRadius: '8px', fontWeight: '500',
+                              cursor: 'pointer', fontSize: '0.82rem'
+                            }}
+                          >
+                            Resend OTP
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </div>
-                </div>
+                )}
+
+                {/* ─── PAN Verification Flow ─── */}
+                {formData.idType === "PAN" && !idVerified && (
+                  <div style={{ padding: '16px', backgroundColor: '#fefce8', borderRadius: '10px', marginTop: '8px', border: '1px solid #fde68a' }}>
+                    <p style={{ margin: '0 0 12px', fontWeight: '600', color: '#854d0e', fontSize: '0.9rem' }}>
+                      🔐 PAN Card Verification
+                    </p>
+                    <p style={{ margin: '0 0 12px', color: '#475569', fontSize: '0.84rem' }}>
+                      Enter additional details to verify your PAN card.
+                    </p>
+                    <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginBottom: '12px' }}>
+                      <div style={{ flex: '1', minWidth: '200px' }}>
+                        <label style={{ ...styles.label, fontSize: '0.82rem' }}>Name as per PAN *</label>
+                        <input
+                          type="text"
+                          value={panName}
+                          onChange={(e) => setPanName(e.target.value)}
+                          placeholder="Full name on PAN card"
+                          style={styles.input}
+                          disabled={idVerified}
+                        />
+                      </div>
+                      <div style={{ flex: '1', minWidth: '180px' }}>
+                        <label style={{ ...styles.label, fontSize: '0.82rem' }}>Date of Birth as per PAN *</label>
+                        <input
+                          type="date"
+                          value={panDob}
+                          onChange={(e) => setPanDob(e.target.value)}
+                          style={styles.input}
+                          disabled={idVerified}
+                        />
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handlePanVerify}
+                      disabled={kycLoading || formData.idNumber.length < 10 || !panName.trim() || !panDob}
+                      style={{
+                        padding: '10px 24px',
+                        backgroundColor: (formData.idNumber.length < 10 || !panName.trim() || !panDob) ? '#94a3b8' : '#ca8a04',
+                        color: '#fff', border: 'none', borderRadius: '8px', fontWeight: '600',
+                        cursor: (formData.idNumber.length < 10 || !panName.trim() || !panDob) ? 'not-allowed' : 'pointer',
+                        fontSize: '0.88rem', opacity: kycLoading ? 0.7 : 1
+                      }}
+                    >
+                      {kycLoading ? "Verifying PAN..." : "Verify PAN"}
+                    </button>
+                  </div>
+                )}
+
+                {/* ─── KYC Status Message ─── */}
+                {kycMessage.text && (
+                  <div style={{
+                    padding: '10px 16px', borderRadius: '8px', marginTop: '8px',
+                    backgroundColor: kycMessage.type === "success" ? '#dcfce7' : '#fee2e2',
+                    color: kycMessage.type === "success" ? '#166534' : '#991b1b',
+                    fontSize: '0.85rem', fontWeight: '500'
+                  }}>
+                    {kycMessage.text}
+                  </div>
+                )}
+
+                {/* ─── Verified Badge ─── */}
+                {idVerified && (
+                  <div style={{
+                    padding: '14px 18px', backgroundColor: '#dcfce7', borderRadius: '10px',
+                    marginTop: '8px', border: '1px solid #86efac', display: 'flex', alignItems: 'center', gap: '10px'
+                  }}>
+                    <span style={{ fontSize: '1.5rem' }}>✅</span>
+                    <div>
+                      <strong style={{ color: '#166534', fontSize: '0.92rem' }}>
+                        {formData.idType} Verified Successfully
+                      </strong>
+                      <p style={{ margin: '2px 0 0', color: '#15803d', fontSize: '0.8rem' }}>
+                        Your identity has been confirmed. You can now submit the form.
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {errors.idVerify && (
+                  <span style={{ ...styles.errorMsg, display: 'block', marginTop: '8px' }}>{errors.idVerify}</span>
+                )}
                 <div style={styles.row}>
                   <div style={styles.inputGroup}>
                     <label style={styles.label}>Emergency Contact Name</label>

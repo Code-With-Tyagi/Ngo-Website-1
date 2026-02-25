@@ -3,6 +3,7 @@ import { useEffect, useLayoutEffect } from "react";
 
 import Home from "../pages/home.jsx";
 import ServicePage from "../pages/service.jsx";
+import ServiceDiagnostics from "../pages/ServiceDiagnostics.jsx";
 import FindNGOs from "../pages/findNgo.jsx";
 import Donate from "../pages/donate.jsx";
 import Volunteer from "../pages/volunteer.jsx";
@@ -11,6 +12,17 @@ import Login from "../pages/login.jsx";
 import Contact from "../pages/contact.jsx";
 import ResetPassword from "../pages/resetPassword.jsx";
 import Profile from "../pages/profile.jsx";
+
+import AdminLayout from "../pages/admin/AdminLayout.jsx";
+import AdminDashboard from "../pages/admin/AdminDashboard.jsx";
+import AdminNgos from "../pages/admin/AdminNgos.jsx";
+import AdminVolunteers from "../pages/admin/AdminVolunteers.jsx";
+import AdminContacts from "../pages/admin/AdminContacts.jsx";
+import AdminUsers from "../pages/admin/AdminUsers.jsx";
+import AdminGallery from "../pages/admin/AdminGallery.jsx";
+
+import GalleryImages from "../pages/gallery/GalleryImages.jsx";
+import GalleryVideos from "../pages/gallery/GalleryVideos.jsx";
 
 import OrphanageEducationPage from "../pages/services/orphanage/education.jsx";
 import Meal from "../pages/services/orphanage/meal.jsx";
@@ -24,6 +36,8 @@ import Rites from "../pages/services/welfare/rites.jsx";
 import FreeHealthCamp from "../pages/services/medical/camp.jsx";
 import CancerSupport from "../pages/services/medical/cancer.jsx";
 import KidneySupport from "../pages/services/medical/kidney.jsx";
+import RoadConstruction from "../pages/services/infrastructure/road-construction.jsx";
+import WidowWomen from "../pages/services/women/widow-women.jsx";
 
 
 
@@ -52,6 +66,14 @@ function RequireVolunteerAuth({ children }) {
   return children;
 }
 
+function ProfileOrAdmin() {
+  try {
+    const user = JSON.parse(localStorage.getItem("user"));
+    if (user?.role === "admin") return <Navigate to="/admin" replace />;
+  } catch {}
+  return <Profile />;
+}
+
 function ScrollToTop() {
   const { pathname } = useLocation();
 
@@ -75,6 +97,7 @@ function AppRoutes() {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/services" element={<ServicePage />} />
+        <Route path="/_test" element={<ServiceDiagnostics />} />
 
         {/* Service Routes */}
         <Route path="/services/orphanage/education" element={<OrphanageEducationPage />} />
@@ -89,6 +112,12 @@ function AppRoutes() {
         <Route path="/services/medical/camp" element={<FreeHealthCamp />} />
         <Route path="/services/medical/cancer" element={<CancerSupport />} />
         <Route path="/services/medical/kidney" element={<KidneySupport />} />
+        <Route path="/services/infrastructure/road-construction" element={<RoadConstruction />} />
+        <Route path="/services/women/widow-women" element={<WidowWomen />} />
+
+        {/* Gallery Routes */}
+        <Route path="/gallery/images" element={<GalleryImages />} />
+        <Route path="/gallery/videos" element={<GalleryVideos />} />
 
         <Route path="/find-ngos" element={<FindNGOs />} />
         <Route path="/donate" element={<Donate />} />
@@ -110,10 +139,21 @@ function AppRoutes() {
           path="/profile"
           element={
             <RequireVolunteerAuth>
-              <Profile />
+              <ProfileOrAdmin />
             </RequireVolunteerAuth>
           }
         />
+
+        {/* Admin Routes */}
+        <Route path="/admin" element={<AdminLayout />}>
+          <Route index element={<AdminDashboard />} />
+          <Route path="ngos" element={<AdminNgos />} />
+          <Route path="volunteers" element={<AdminVolunteers />} />
+          <Route path="contacts" element={<AdminContacts />} />
+          <Route path="gallery" element={<AdminGallery />} />
+          <Route path="users" element={<AdminUsers />} />
+        </Route>
+
       </Routes>
     </>
   );

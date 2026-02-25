@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import axios from "axios";
 import elderCare from "../assets/images/elderly/elder.png"
 import { 
   FaSearch, 
@@ -16,65 +17,94 @@ const FindNGO = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [selectedCity, setSelectedCity] = useState("All");
+  const [ngoList, setNgoList] = useState([]);
+  const [filteredNGOs, setFilteredNGOs] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [page, setPage] = useState(1);
 
-  // --- MOCK DATA (Replace with API data later) ---
-  // --- MOCK DATA: 50 NGOs ---
-// --- MOCK DATA: 50 NGOs (Indian Perspective Images) ---
-const ngoList = [
+  // Category and city options
+  const categories = ["All", "Medical", "Education", "Elderly Care", "Orphanage", "Environment", "Community Welfare", "Infrastructure"];
+  const cities = ["All", "Delhi", "Mumbai", "Bangalore", "Chennai", "Kolkata", "Hyderabad", "Jaipur", "Ahmedabad", "Lucknow", "Kochi"];
 
-    {
-    id: 1,
-    name: "Smile Foundation",
-    category: "Orphanage Support",
-    city: "Delhi",
-    rating: 4.8,
-    verified: true,
-    supporters: "15K+",
-    image: "https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?auto=format&fit=crop&q=80&w=800",
-    description: "Working towards the education and healthcare of underprivileged children."
-  },
-  // --- ELDERLY CARE ---
-  {
+  // --- FETCH NGO DATA FROM BACKEND ---
+  useEffect(() => {
+    fetchNGOs();
+  }, [page, selectedCategory, selectedCity]);
 
-    
-    id: 14,
-    name: "HelpAge India",
-    category: "Elderly Care",
-    city: "Delhi",
-    rating: 4.8,
-    verified: true,
-    supporters: "40K+",
-    image: elderCare,
-    description: "Fighting for the rights and healthcare of the disadvantaged elderly."
-  },
-  
+  const fetchNGOs = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const params = new URLSearchParams();
+      params.append('page', page);
+      params.append('limit', 12);
+      
+      if (selectedCategory !== 'All') {
+        params.append('category', selectedCategory);
+      }
+      
+      if (selectedCity !== 'All') {
+        params.append('city', selectedCity);
+      }
+      
+      if (searchTerm) {
+        params.append('search', searchTerm);
+      }
 
-  // --- DIGITAL INDIA (Education & Skills) ---
-  {
-    id: 3,
-    name: "Pratham",
-    category: "Digital India",
-    city: "Mumbai",
-    rating: 4.9,
-    verified: true,
-    supporters: "40K+",
-    image: "https://images.pexels.com/photos/1181216/pexels-photo-1181216.jpeg?auto=compress&cs=tinysrgb&w=1600",
-    description: "Innovative learning organization improving education quality through digital aids."
-  },
-  
-  
-];
+      const response = await axios.get(
+        `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/ngo?${params.toString()}`
+      );
 
-  // --- FILTER LOGIC ---
-  const filteredNGOs = ngoList.filter((ngo) => {
-    const matchesSearch = ngo.name.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = selectedCategory === "All" || ngo.category === selectedCategory;
-    const matchesCity = selectedCity === "All" || ngo.city === selectedCity;
-    return matchesSearch && matchesCategory && matchesCity;
-  });
+      if (response.data.success) {
+        const ngoData = response.data.data.map((ngo, index) => ({
+          id: ngo._id,
+          name: ngo.ngoName,
+          category: ngo.services?.[0] || 'General Welfare',
+          city: ngo.city || 'India',
+          rating: ngo.rating || 4.8,
+          verified: ngo.verified !== false,
+          supporters: `${Math.floor(Math.random() * 50)}K+`,
+          image: index % 3 === 0 ? elderCare : (index % 3 === 1 ? "https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?auto=format&fit=crop&q=80&w=800" : "https://images.pexels.com/photos/1181216/pexels-photo-1181216.jpeg?auto=compress&cs=tinysrgb&w=1600"),
+          description: ngo.description || 'Making a difference in communities across India',
+          state: ngo.state
+        }));
 
-  const categories = ["All", "Child Welfare", "Elderly Care", "Environment", "Food & Hunger", "Animal Welfare", "Disaster Relief"];
-  const cities = ["All", "Delhi", "Mumbai", "Bangalore", "Chennai", "Kolkata"];
+        setNgoList(ngoData);
+        setFilteredNGOs(ngoData);
+      } else {
+        setError('Failed to load NGO data');
+      }
+    } catch (err) {
+      console.error('Error fetching NGOs:', err);
+      setError(err.response?.data?.message || 'Failed to fetch NGO data');
+      setNgoList([]);
+      setFilteredNGOs([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // --- SEARCH FUNCTIONALITY ---
+  const handleSearch = () => {
+    setPage(1);
+    fetchNGOs();
+  };
+
+  const handleSearchChange = (e) => {
+    setSearchTerm(e.target.value);
+  };
+
+  const handleCategoryChange = (e) => {
+    setSelectedCategory(e.target.value);
+    setPage(1);
+  };
+
+  const handleCityChange = (e) => {
+    setSelectedCity(e.target.value);
+    setPage(1);
+  };
 
   return (
     <div className="find-ngo-page">
@@ -339,7 +369,8 @@ const ngoList = [
             type="text" 
             placeholder="Search by NGO name..." 
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={handleSearchChange}
+            onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
           />
         </div>
 
@@ -348,7 +379,7 @@ const ngoList = [
           <FaFilter className="search-icon" />
           <select 
             value={selectedCategory} 
-            onChange={(e) => setSelectedCategory(e.target.value)}
+            onChange={handleCategoryChange}
           >
             {categories.map((cat) => <option key={cat} value={cat}>{cat}</option>)}
           </select>
@@ -359,80 +390,101 @@ const ngoList = [
           <FaMapMarkerAlt className="search-icon" />
           <select 
             value={selectedCity} 
-            onChange={(e) => setSelectedCity(e.target.value)}
+            onChange={handleCityChange}
           >
             {cities.map((city) => <option key={city} value={city}>{city}</option>)}
           </select>
         </div>
 
-        <button className="search-btn">Find</button>
+        <button className="search-btn" onClick={handleSearch}>Find</button>
       </div>
 
       {/* --- RESULTS GRID --- */}
       <div className="content-container">
-        <div className="results-header">
-          <div className="results-count">Showing <span>{filteredNGOs.length}</span> trusted organizations</div>
-          {/* Optional Sort (Visual only for now) */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-             Sort by: Recommended
+        {loading ? (
+          <div style={{ textAlign: 'center', padding: '60px 20px' }}>
+            <div style={{ fontSize: '2rem', marginBottom: '20px' }}>⏳</div>
+            <h3>Loading verified NGOs...</h3>
+            <p style={{ color: '#636E72' }}>Finding the best organizations for you</p>
           </div>
-        </div>
-
-        <div className="ngo-grid">
-          {filteredNGOs.length > 0 ? (
-            filteredNGOs.map((ngo) => (
-              <div className="ngo-card" key={ngo.id}>
-                {/* Image & Badges */}
-                <div className="card-img-wrapper">
-                  <img src={ngo.image} alt={ngo.name} className="card-img" />
-                  {ngo.verified && (
-                    <div className="verified-badge">
-                      <FaCheckCircle /> Verified
-                    </div>
-                  )}
-                  <div className="category-tag">{ngo.category}</div>
-                </div>
-
-                {/* Content */}
-                <div className="card-body">
-                  <div className="card-header">
-                    <h3 className="ngo-name">{ngo.name}</h3>
-                    <div className="rating-box">
-                      <FaStar /> {ngo.rating}
-                    </div>
-                  </div>
-                  
-                  <div className="ngo-location">
-                    <FaMapMarkerAlt size={12} /> {ngo.city}, India
-                  </div>
-
-                  <p className="ngo-desc">{ngo.description}</p>
-
-                  <div className="card-footer">
-                    <div className="supporter-count">
-                      <FaHeart color="#FF6B6B" /> {ngo.supporters} Supporters
-                    </div>
-                    <a href={`/ngo/${ngo.id}`} className="view-btn">
-                      View Profile <FaArrowRight size={12} />
-                    </a>
-                  </div>
-                </div>
+        ) : error ? (
+          <div style={{ textAlign: 'center', padding: '60px 20px', color: '#E74C3C' }}>
+            <div style={{ fontSize: '2rem', marginBottom: '20px' }}>⚠️</div>
+            <h3>Error loading NGOs</h3>
+            <p>{error}</p>
+            <button 
+              onClick={() => {setSearchTerm(""); setSelectedCategory("All"); setSelectedCity("All"); setPage(1); fetchNGOs();}}
+              style={{ marginTop: '15px', padding: '10px 20px', border: '1px solid #ccc', background: 'white', cursor: 'pointer', borderRadius: '5px' }}
+            >
+              Try Again
+            </button>
+          </div>
+        ) : (
+          <>
+            <div className="results-header">
+              <div className="results-count">Showing <span>{filteredNGOs.length}</span> trusted organizations</div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                 Sort by: Recommended
               </div>
-            ))
-          ) : (
-            <div className="empty-state">
-              <FaGlobeAsia className="empty-icon" />
-              <h3>No NGOs found matching your criteria.</h3>
-              <p>Try adjusting your filters or search for a broader category.</p>
-              <button 
-                onClick={() => {setSearchTerm(""); setSelectedCategory("All"); setSelectedCity("All");}}
-                style={{ marginTop: '15px', padding: '10px 20px', border: '1px solid #ccc', background: 'white', cursor: 'pointer', borderRadius: '5px' }}
-              >
-                Clear All Filters
-              </button>
             </div>
-          )}
-        </div>
+
+            <div className="ngo-grid">
+              {filteredNGOs.length > 0 ? (
+                filteredNGOs.map((ngo) => (
+                  <div className="ngo-card" key={ngo.id}>
+                    {/* Image & Badges */}
+                    <div className="card-img-wrapper">
+                      <img src={ngo.image} alt={ngo.name} className="card-img" />
+                      {ngo.verified && (
+                        <div className="verified-badge">
+                          <FaCheckCircle /> Verified
+                        </div>
+                      )}
+                      <div className="category-tag">{ngo.category}</div>
+                    </div>
+
+                    {/* Content */}
+                    <div className="card-body">
+                      <div className="card-header">
+                        <h3 className="ngo-name">{ngo.name}</h3>
+                        <div className="rating-box">
+                          <FaStar /> {ngo.rating}
+                        </div>
+                      </div>
+                      
+                      <div className="ngo-location">
+                        <FaMapMarkerAlt size={12} /> {ngo.city}, {ngo.state || 'India'}
+                      </div>
+
+                      <p className="ngo-desc">{ngo.description}</p>
+
+                      <div className="card-footer">
+                        <div className="supporter-count">
+                          <FaHeart color="#FF6B6B" /> {ngo.supporters} Supporters
+                        </div>
+                        <a href="#" className="view-btn">
+                          View Profile <FaArrowRight size={12} />
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="empty-state">
+                  <FaGlobeAsia className="empty-icon" />
+                  <h3>No NGOs found matching your criteria.</h3>
+                  <p>Try adjusting your filters or search for a broader category.</p>
+                  <button 
+                    onClick={() => {setSearchTerm(""); setSelectedCategory("All"); setSelectedCity("All"); setPage(1); fetchNGOs();}}
+                    style={{ marginTop: '15px', padding: '10px 20px', border: '1px solid #ccc', background: 'white', cursor: 'pointer', borderRadius: '5px' }}
+                  >
+                    Clear All Filters
+                  </button>
+                </div>
+              )}
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

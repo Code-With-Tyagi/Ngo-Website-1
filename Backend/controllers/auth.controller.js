@@ -39,13 +39,15 @@ const toUserPayload = (user) => ({
     id: user._id,
     name: user.name,
     email: user.email,
+    emailVerified: Boolean(user.emailVerified),
+    aadhaarVerified: Boolean(user.aadhaarVerified),
+    isVerified: Boolean(user.emailVerified),
     phone: user.phone || "",
-    address: user.address || "",
     city: user.city || "",
     state: user.state || "",
     avatar: user.avatar || null,
     authProvider: user.authProvider || "local",
-    emailVerified: Boolean(user.emailVerified),
+    role: user.role || "user",
     createdAt: user.createdAt || null
 });
 
@@ -878,7 +880,7 @@ export const logoutUser = async (req, res) => {
             httpOnly: true,
             expires: new Date(0)
         });
-        
+
         res.status(200).json({
             success: true,
             message: "User logged out successfully"

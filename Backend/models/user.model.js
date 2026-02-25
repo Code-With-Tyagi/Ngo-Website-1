@@ -1,13 +1,13 @@
 import mongoose from "mongoose";
-const userSchema=new mongoose.Schema({
-    name:{
-        type:String,
-        required:[true,"Please enter your name"],
+const userSchema = new mongoose.Schema({
+    name: {
+        type: String,
+        required: [true, "Please enter your name"],
         trim: true
     },
-    email:{
-        type:String,
-        required:[true,"Please enter your email"],
+    email: {
+        type: String,
+        required: [true, "Please enter your email"],
         unique: true,
         lowercase: true,
         trim: true
@@ -37,8 +37,13 @@ const userSchema=new mongoose.Schema({
         enum: ["local", "google"],
         default: "local"
     },
-    password:{
-        type:String,
+    role: {
+        type: String,
+        enum: ["user", "admin"],
+        default: "user"
+    },
+    password: {
+        type: String,
         required: function () {
             return this.authProvider === "local";
         }
@@ -80,6 +85,23 @@ const userSchema=new mongoose.Schema({
     resetPasswordExpiresAt: {
         type: Date,
         default: null
+    },
+    aadhaarVerified: {
+        type: Boolean,
+        default: false
+    },
+    panVerified: {
+        type: Boolean,
+        default: false
+    },
+    panNumber: {
+        type: String,
+        default: null,
+        trim: true
+    },
+    panVerificationData: {
+        type: mongoose.Schema.Types.Mixed,
+        default: null
     }
 }, {
     timestamps: true
@@ -89,5 +111,5 @@ userSchema.index({ resetPasswordTokenHash: 1, resetPasswordExpiresAt: 1 });
 userSchema.index({ emailVerificationOtpHash: 1, emailVerificationOtpExpiresAt: 1 });
 userSchema.index({ googleId: 1 }, { unique: true, sparse: true });
 
-const User=mongoose.model("User",userSchema);
+const User = mongoose.model("User", userSchema);
 export default User;

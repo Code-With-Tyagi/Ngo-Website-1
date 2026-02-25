@@ -6,9 +6,6 @@ import {
   FaCamera,
   FaHeart,
   FaHandHoldingHeart,
-  FaShieldAlt,
-  FaCheckCircle,
-  FaExclamationTriangle,
   FaSignOutAlt,
   FaDownload,
   FaSpinner
@@ -71,12 +68,6 @@ const Profile = () => {
   const [selectedAvatarFile, setSelectedAvatarFile] = useState(null);
   const [savingProfile, setSavingProfile] = useState(false);
   const [saveNotice, setSaveNotice] = useState({ type: '', message: '' });
-  const [showEmailOtpModal, setShowEmailOtpModal] = useState(false);
-  const [emailOtp, setEmailOtp] = useState('');
-  const [emailOtpNotice, setEmailOtpNotice] = useState({ type: '', message: '' });
-  const [sendingEmailOtp, setSendingEmailOtp] = useState(false);
-  const [verifyingEmailOtp, setVerifyingEmailOtp] = useState(false);
-  const [otpResendSecondsLeft, setOtpResendSecondsLeft] = useState(0);
   const [showChangePasswordModal, setShowChangePasswordModal] = useState(false);
   const [changePasswordForm, setChangePasswordForm] = useState({
     currentPassword: '',
@@ -85,6 +76,8 @@ const Profile = () => {
   });
   const [changePasswordNotice, setChangePasswordNotice] = useState({ type: '', message: '' });
   const [changingPassword, setChangingPassword] = useState(false);
+
+
 
   // Placeholder history sections (replace with backend data when APIs are ready).
   const donationHistory = [
@@ -261,26 +254,8 @@ const Profile = () => {
     return () => clearTimeout(timer);
   }, [saveNotice.message]);
 
-  useEffect(() => {
-    if (!showEmailOtpModal) return undefined;
-
-    const timer = setInterval(() => {
-      setOtpResendSecondsLeft((previous) => (previous > 0 ? previous - 1 : 0));
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, [showEmailOtpModal]);
-
   const handleLogout = () => {
     console.log("Logging out...");
-  };
-
-  const closeEmailOtpModal = () => {
-    if (sendingEmailOtp || verifyingEmailOtp) return;
-    setShowEmailOtpModal(false);
-    setEmailOtp('');
-    setEmailOtpNotice({ type: '', message: '' });
-    setOtpResendSecondsLeft(0);
   };
 
   const openChangePasswordModal = () => {
@@ -378,109 +353,6 @@ const Profile = () => {
     window.dispatchEvent(new Event('authChanged'));
   };
 
-  const requestEmailOtp = async () => {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      setEmailOtpNotice({ type: 'error', message: 'Please log in again to verify your email.' });
-      return;
-    }
-
-    setSendingEmailOtp(true);
-    setEmailOtpNotice({ type: '', message: '' });
-
-    try {
-      const res = await fetch(`${API_BASE_URL}/api/email-verification/send-otp`, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        credentials: 'include',
-      });
-
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok || !data?.success) {
-        if (Number(data?.retryAfterSeconds || 0) > 0) {
-          setOtpResendSecondsLeft(Number(data.retryAfterSeconds));
-        }
-        throw new Error(data?.message || 'Unable to send OTP right now');
-      }
-
-      if (data?.data) {
-        persistVerifiedUser(data.data);
-        setShowEmailOtpModal(false);
-        setSaveNotice({ type: 'success', message: data.message || 'Email already verified.' });
-        return;
-      }
-
-      setEmailOtpNotice({ type: 'success', message: data.message || 'We sent OTP to your email.' });
-      setOtpResendSecondsLeft(Math.max(Number(data?.resendCooldownSeconds || 60), 0));
-    } catch (error) {
-      setEmailOtpNotice({ type: 'error', message: error.message || 'Failed to send OTP.' });
-    } finally {
-      setSendingEmailOtp(false);
-    }
-  };
-
-  const handleVerifyEmail = async () => {
-    setShowEmailOtpModal(true);
-    setEmailOtp('');
-    await requestEmailOtp();
-  };
-
-  const handleResendEmailOtp = async () => {
-    if (sendingEmailOtp || verifyingEmailOtp || otpResendSecondsLeft > 0) return;
-    await requestEmailOtp();
-  };
-
-  const handleVerifyEmailOtpSubmit = async (event) => {
-    event.preventDefault();
-
-    const token = localStorage.getItem('token');
-    if (!token) {
-      setEmailOtpNotice({ type: 'error', message: 'Please log in again to verify your email.' });
-      return;
-    }
-
-    if (!/^\d{6}$/.test(emailOtp.trim())) {
-      setEmailOtpNotice({ type: 'error', message: 'Please enter a valid 6-digit OTP.' });
-      return;
-    }
-
-    setVerifyingEmailOtp(true);
-    setEmailOtpNotice({ type: '', message: '' });
-
-    try {
-      const res = await fetch(`${API_BASE_URL}/api/email-verification/verify-otp`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        credentials: 'include',
-        body: JSON.stringify({ otp: emailOtp.trim() }),
-      });
-
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok || !data?.success) {
-        throw new Error(data?.message || 'OTP verification failed');
-      }
-
-      if (data?.data) {
-        persistVerifiedUser(data.data);
-      }
-
-      setShowEmailOtpModal(false);
-      setEmailOtp('');
-      setEmailOtpNotice({ type: '', message: '' });
-      setOtpResendSecondsLeft(0);
-      setSaveNotice({ type: 'success', message: data.message || 'Email verified successfully.' });
-    } catch (error) {
-      setEmailOtpNotice({ type: 'error', message: error.message || 'OTP verification failed.' });
-    } finally {
-      setVerifyingEmailOtp(false);
-    }
-  };
-
   if (loading) {
     return (
       <div className="profile-loading profile-loading-animated">
@@ -507,7 +379,6 @@ const Profile = () => {
   const memberSince = user.createdAt
     ? new Date(user.createdAt).toLocaleDateString('en-IN', { month: 'short', year: 'numeric' })
     : 'Recently Joined';
-  const isVerified = Boolean(user.emailVerified);
   const visibleAvatar = avatarPreview || user.avatar || '';
 
   // --- RENDER FUNCTIONS ---
@@ -517,42 +388,35 @@ const Profile = () => {
       <div className="user-short-profile">
         <div className="sidebar-avatar">
           {visibleAvatar ? <img src={visibleAvatar} alt="Profile" /> : userInitial}
-          {isVerified && <div className="verified-badge-icon"><FaCheckCircle /></div>}
         </div>
         <h3>{user.name || 'User'}</h3>
         <p className="user-email-mini">{user.email || 'Not Available'}</p>
       </div>
 
       <nav className="sidebar-nav">
-        <button 
-          className={`nav-item ${activeTab === 'overview' ? 'active' : ''}`} 
+        <button
+          className={`nav-item ${activeTab === 'overview' ? 'active' : ''}`}
           onClick={() => setActiveTab('overview')}
         >
           <FaUser className="nav-icon" /> Overview
         </button>
-        <button 
-          className={`nav-item ${activeTab === 'personal' ? 'active' : ''}`} 
+        <button
+          className={`nav-item ${activeTab === 'personal' ? 'active' : ''}`}
           onClick={() => setActiveTab('personal')}
         >
           <FaUser className="nav-icon" /> Personal Info
         </button>
-        <button 
-          className={`nav-item ${activeTab === 'donations' ? 'active' : ''}`} 
+        <button
+          className={`nav-item ${activeTab === 'donations' ? 'active' : ''}`}
           onClick={() => setActiveTab('donations')}
         >
           <FaHeart className="nav-icon" /> Donation History
         </button>
-        <button 
-          className={`nav-item ${activeTab === 'volunteer' ? 'active' : ''}`} 
+        <button
+          className={`nav-item ${activeTab === 'volunteer' ? 'active' : ''}`}
           onClick={() => setActiveTab('volunteer')}
         >
           <FaHandHoldingHeart className="nav-icon" /> Volunteer Activity
-        </button>
-        <button 
-          className={`nav-item ${activeTab === 'security' ? 'active' : ''}`} 
-          onClick={() => setActiveTab('security')}
-        >
-          <FaShieldAlt className="nav-icon" /> Security
         </button>
         <button className="nav-item logout-btn" onClick={handleLogout}>
           <FaSignOutAlt className="nav-icon" /> Logout
@@ -564,7 +428,7 @@ const Profile = () => {
   const renderOverview = () => (
     <div className="tab-content fade-in">
       <h2>Profile Overview</h2>
-      
+
       <div className="overview-card">
         <div className="overview-top">
           <div className="overview-avatar-large">
@@ -573,13 +437,8 @@ const Profile = () => {
           <div className="overview-details">
             <div className="name-header">
               <h3>{user.name || 'User'}</h3>
-              {isVerified ? (
-                <span className="badge-verified"><FaCheckCircle /> Verified</span>
-              ) : (
-                <span className="badge-unverified"><FaExclamationTriangle /> Unverified</span>
-              )}
             </div>
-            
+
             <div className="detail-grid">
               <div className="detail-item">
                 <label>Email</label>
@@ -594,19 +453,10 @@ const Profile = () => {
                 <span>{memberSince}</span>
               </div>
               <div className="detail-item">
-                 <label>State</label>
-                 <span>{userState}</span>
+                <label>State</label>
+                <span>{userState}</span>
               </div>
             </div>
-
-            {!isVerified && (
-              <div className="verification-alert">
-                <p>Your email is not verified yet.</p>
-                <button className="btn-small-warning" type="button" onClick={handleVerifyEmail}>
-                  Verify Email Now
-                </button>
-              </div>
-            )}
           </div>
         </div>
       </div>
@@ -619,7 +469,7 @@ const Profile = () => {
       <p className="sub-text">Update your photo and personal details here.</p>
 
       <form className="personal-form" onSubmit={handleSavePersonalInfo}>
-        
+
         {/* Profile Picture Upload Section */}
         <div className="avatar-upload-section">
           <div className="avatar-preview">
@@ -662,7 +512,7 @@ const Profile = () => {
           <div className="form-group full-width">
             <label>Address</label>
             <div className="input-icon-wrapper">
-              <FaMapMarkerAlt className="input-icon"/>
+              <FaMapMarkerAlt className="input-icon" />
               <input
                 type="text"
                 value={profileForm.address}
@@ -703,7 +553,7 @@ const Profile = () => {
   const renderDonations = () => (
     <div className="tab-content fade-in">
       <h2>Donation History</h2>
-      
+
       {donationHistory.length > 0 ? (
         <div className="table-wrapper">
           <table className="custom-table">
@@ -776,114 +626,11 @@ const Profile = () => {
     </div>
   );
 
-  const renderSecurity = () => (
-    <div className="tab-content fade-in">
-      <h2>Security Settings</h2>
-      <p className="sub-text">Manage your account security preferences.</p>
-
-      <div className="security-list">
-        
-        {/* Email Verification Row */}
-        <div className="security-row">
-          <div className="sec-info">
-            <h4>Email Verification</h4>
-            <p>Status: <span className={isVerified ? "text-success" : "text-warning"}>
-              {isVerified ? "Verified" : "Unverified"}
-            </span></p>
-          </div>
-          <div className="sec-action">
-            {isVerified ? (
-              <button className="btn-sec disabled" disabled>Verified</button>
-            ) : (
-              <button className="btn-sec btn-verify" type="button" onClick={handleVerifyEmail}>
-                Verify Email
-              </button>
-            )}
-          </div>
-        </div>
-
-        {/* Password Row */}
-        <div className="security-row">
-          <div className="sec-info">
-            <h4>Password</h4>
-            <p>Permanently change your login password.</p>
-          </div>
-          <div className="sec-action">
-            <button className="btn-sec" type="button" onClick={openChangePasswordModal}>
-              Change Password
-            </button>
-          </div>
-        </div>
-
-      </div>
-    </div>
-  );
-
   return (
     <div className="profile-layout">
       {saveNotice.message && (
         <div className={`save-toast ${saveNotice.type === 'success' ? 'toast-success' : 'toast-error'}`}>
           {saveNotice.message}
-        </div>
-      )}
-
-      {showEmailOtpModal && (
-        <div className="otp-modal-overlay" onClick={closeEmailOtpModal}>
-          <div className="otp-modal-card" onClick={(event) => event.stopPropagation()}>
-            <button
-              type="button"
-              className="otp-close-btn"
-              onClick={closeEmailOtpModal}
-              disabled={sendingEmailOtp || verifyingEmailOtp}
-              aria-label="Close"
-            >
-              x
-            </button>
-
-            <h3 className="otp-modal-title">Verify Your Email</h3>
-            <p className="otp-modal-subtitle">
-              We sent a one-time password to <strong>{user.email}</strong>. Enter the 6-digit OTP below.
-            </p>
-
-            {emailOtpNotice.message && (
-              <div className={`otp-notice ${emailOtpNotice.type === 'success' ? 'otp-notice-success' : 'otp-notice-error'}`}>
-                {emailOtpNotice.message}
-              </div>
-            )}
-
-            <form className="otp-form" onSubmit={handleVerifyEmailOtpSubmit}>
-              <input
-                className="otp-input"
-                type="text"
-                value={emailOtp}
-                onChange={(event) => setEmailOtp(event.target.value.replace(/\D/g, '').slice(0, 6))}
-                inputMode="numeric"
-                maxLength={6}
-                placeholder="Enter 6-digit OTP"
-                disabled={sendingEmailOtp || verifyingEmailOtp}
-                required
-              />
-
-              <button className="otp-verify-btn" type="submit" disabled={sendingEmailOtp || verifyingEmailOtp}>
-                {verifyingEmailOtp ? 'Verifying...' : 'Verify OTP'}
-              </button>
-            </form>
-
-            <div className="otp-footer">
-              <button
-                type="button"
-                className="otp-resend-btn"
-                onClick={handleResendEmailOtp}
-                disabled={sendingEmailOtp || verifyingEmailOtp || otpResendSecondsLeft > 0}
-              >
-                {sendingEmailOtp
-                  ? 'Sending...'
-                  : otpResendSecondsLeft > 0
-                    ? `Resend OTP in ${otpResendSecondsLeft}s`
-                    : 'Resend OTP'}
-              </button>
-            </div>
-          </div>
         </div>
       )}
 
@@ -959,7 +706,6 @@ const Profile = () => {
           {activeTab === 'personal' && renderPersonalInfo()}
           {activeTab === 'donations' && renderDonations()}
           {activeTab === 'volunteer' && renderVolunteer()}
-          {activeTab === 'security' && renderSecurity()}
         </main>
       </div>
     </div>

@@ -7,6 +7,8 @@ import {
   FaShieldAlt,
   FaUserCircle,
 } from "react-icons/fa";
+import { useLanguage, translate } from "../../../utils/useLanguage.jsx";
+import { communityHelmetTranslations as T } from "../../../utils/serviceTranslations.js";
 
 // Update this path to where your actual helmet drive image is located
 import helmetDriveImg from "../../../assets/images/communitySafety/helmet.png";
@@ -32,39 +34,56 @@ const DONATIONS = [
 const FAQS = [
   {
     question: "Who receives these helmets?",
+    questionHi: "ये हेलमेट कौन प्राप्त करता है?",
     answer:
       "We primarily distribute helmets to daily wage workers, delivery executives, and low-income two-wheeler riders who often cannot afford high-quality protective gear.",
+    answerHi:
+      "हम मुख्य रूप से दैनिक वेतन भोगी श्रमिकों, डिलीवरी कर्मचारियों और कम आय वाले दोपहिया वाहन चालकों को हेलमेट वितरित करते हैं जो अक्सर उच्च गुणवत्ता वाले सुरक्षा उपकरण नहीं खरीद सकते।",
   },
   {
     question: "Are the helmets certified and safe?",
+    questionHi: "क्या हेलमेट प्रमाणित और सुरक्षित हैं?",
     answer:
       "Absolutely. We only procure and distribute strictly ISI-certified, full-face helmets that meet government safety standards. We never compromise on quality.",
+    answerHi:
+      "बिल्कुल। हम केवल सख्त ISI-प्रमाणित, फुल-फेस हेलमेट खरीदते और वितरित करते हैं जो सरकारी सुरक्षा मानकों को पूरा करते हैं। हम गुणवत्ता से कभी समझौता नहीं करते।",
   },
   {
     question: "Will I get a donation receipt?",
+    questionHi: "क्या मुझे दान की रसीद मिलेगी?",
     answer:
       "Yes. You will receive a confirmation and a donation receipt on your registered email ID as soon as your contribution is completed successfully.",
+    answerHi:
+      "हाँ। आपका योगदान सफलतापूर्वक पूर्ण होते ही आपको अपनी पंजीकृत ईमेल आईडी पर पुष्टि और दान रसीद प्राप्त होगी।",
   },
   {
     question: "Can I volunteer for the distribution drives?",
+    questionHi: "क्या मैं वितरण अभियानों के लिए स्वयंसेवा कर सकता हूँ?",
     answer:
       "Yes! We regularly hold distribution drives at major traffic intersections. You can reach out to our team to join us as a ground volunteer.",
+    answerHi:
+      "हाँ! हम नियमित रूप से प्रमुख ट्रैफिक चौराहों पर वितरण अभियान आयोजित करते हैं। आप हमारी टीम से संपर्क करके ग्राउंड वॉलंटियर के रूप में हमसे जुड़ सकते हैं।",
   },
   {
     question: "Can I share this campaign with friends?",
+    questionHi: "क्या मैं इस अभियान को दोस्तों के साथ साझा कर सकता हूँ?",
     answer:
       "Yes. Road safety is everyone's responsibility. Use the Share button to quickly send this page to your contacts and help this cause reach more people.",
+    answerHi:
+      "हाँ। सड़क सुरक्षा हर किसी की जिम्मेदारी है। इस पृष्ठ को अपने संपर्कों को जल्दी भेजने के लिए शेयर बटन का उपयोग करें और इस उद्देश्य को अधिक लोगों तक पहुँचाने में मदद करें।",
   },
 ];
 
 const STORY = [
-  "Every day, thousands of two-wheeler riders risk their lives on our chaotic roads. Head injuries remain the leading cause of fatalities in road accidents, largely because many riders cannot afford quality head protection.",
-  "Many daily wage earners and delivery partners resort to wearing cheap, roadside plastic caps just to avoid traffic fines. These offer zero protection in the event of a crash, leaving families completely devastated when the worst happens.",
-  "Our 'Protect Lives' Helmet Distribution Drive aims to change this. We are raising funds to distribute high-quality, ISI-certified helmets to vulnerable riders across the city. Each helmet costs just Rs 500, but its value in saving a life is immeasurable.",
-  "Your contribution can ensure that a breadwinner returns home safely to their family every single night. Donate today and help us put a protective shield around those who need it most."
+  { en: "Every day, thousands of two-wheeler riders risk their lives on our chaotic roads. Head injuries remain the leading cause of fatalities in road accidents, largely because many riders cannot afford quality head protection.", hi: "हर दिन, हजारों दोपहिया वाहन चालक हमारी अव्यवस्थित सड़कों पर अपनी जान जोखिम में डालते हैं। सड़क दुर्घटनाओं में सिर की चोटें मौतों का प्रमुख कारण बनी हुई हैं, मुख्य रूप से इसलिए क्योंकि कई सवार गुणवत्तापूर्ण सिर सुरक्षा का खर्च वहन नहीं कर सकते।" },
+  { en: "Many daily wage earners and delivery partners resort to wearing cheap, roadside plastic caps just to avoid traffic fines. These offer zero protection in the event of a crash, leaving families completely devastated when the worst happens.", hi: "कई दैनिक वेतन भोगी और डिलीवरी पार्टनर केवल ट्रैफिक जुर्माने से बचने के लिए सस्ती, सड़क किनारे की प्लास्टिक टोपियां पहनते हैं। ये दुर्घटना की स्थिति में शून्य सुरक्षा प्रदान करती हैं, जब सबसे बुरा होता है तो परिवार पूरी तरह तबाह हो जाते हैं।" },
+  { en: "Our 'Protect Lives' Helmet Distribution Drive aims to change this. We are raising funds to distribute high-quality, ISI-certified helmets to vulnerable riders across the city. Each helmet costs just Rs 500, but its value in saving a life is immeasurable.", hi: "हमारा 'जीवन की रक्षा करें' हेलमेट वितरण अभियान इसे बदलने का लक्ष्य रखता है। हम शहर भर में कमजोर सवारों को उच्च गुणवत्ता वाले, ISI-प्रमाणित हेलमेट वितरित करने के लिए धन जुटा रहे हैं। प्रत्येक हेलमेट की कीमत केवल 500 रुपये है, लेकिन जीवन बचाने में इसका मूल्य अमूल्य है।" },
+  { en: "Your contribution can ensure that a breadwinner returns home safely to their family every single night. Donate today and help us put a protective shield around those who need it most.", hi: "आपका योगदान सुनिश्चित कर सकता है कि एक कमाने वाला हर रात सुरक्षित रूप से अपने परिवार के पास लौटे। आज दान करें और उन लोगों के चारों ओर सुरक्षा कवच लगाने में हमारी मदद करें जिन्हें इसकी सबसे अधिक आवश्यकता है।" },
 ];
 
 function HelmetDrivePage() {
+  const { language } = useLanguage();
+  const t = (key) => translate(key, T, language);
   const [storyExpanded, setStoryExpanded] = useState(false);
   const [openFaq, setOpenFaq] = useState(null);
   const [shareLabel, setShareLabel] = useState("Share");
@@ -77,7 +96,7 @@ function HelmetDrivePage() {
   );
   const modalDonations =
     donationModalType === "top" ? sortedDonations.slice(0, 10) : sortedDonations;
-  const modalTitle = donationModalType === "top" ? "Top Donations" : "All Donations";
+  const modalTitle = donationModalType === "top" ? t("topDonations") || "Top Donations" : t("allDonations") || "All Donations";
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -139,12 +158,12 @@ function HelmetDrivePage() {
               </div>
 
               <div className="campaign-body">
-                <h1>Protect Lives: Nationwide Helmet Distribution Drive</h1>
-                <p className="campaign-org">by SafeRoads Initiative</p>
+                <h1>{t("title")}</h1>
+                <p className="campaign-org">{t("organization")}</p>
 
                 <div className="campaign-amounts">
                   <strong>Rs 3,85,000</strong>
-                  <span>raised of Rs 5,00,000 goal</span>
+                  <span>{language === 'hi' ? 'के' : 'raised of'} Rs 5,00,000 {language === 'hi' ? 'लक्ष्य' : 'goal'}</span>
                 </div>
 
                 <div className="campaign-progress" aria-hidden="true">
@@ -154,28 +173,28 @@ function HelmetDrivePage() {
                 <div className="campaign-stats">
                   <div>
                     <strong>524</strong>
-                    <span>Donors</span>
+                    <span>{language === 'hi' ? 'दानकर्ता' : 'Donors'}</span>
                   </div>
                   <div>
                     <strong>21</strong>
-                    <span>Days left</span>
+                    <span>{language === 'hi' ? 'दिन बचे' : 'Days left'}</span>
                   </div>
                   <div>
                     <strong>77%</strong>
-                    <span>Funded</span>
+                    <span>{language === 'hi' ? 'वित्त पोषित' : 'Funded'}</span>
                   </div>
                 </div>
 
                 <div className="campaign-actions">
-                  <Link to="/donate" className="campaign-btn campaign-btn-primary">
-                    Donate Now
+                  <Link to="/donate" state={{ serviceImage: helmetDriveImg, serviceTitle: t("title") }} className="campaign-btn campaign-btn-primary">
+                    {t("donateNow")}
                   </Link>
                   <button
                     type="button"
                     className="campaign-btn campaign-btn-secondary"
                     onClick={handleShare}
                   >
-                    {shareLabel}
+                    {shareLabel === "Share" ? t("share") : shareLabel}
                   </button>
                 </div>
               </div>
@@ -184,10 +203,10 @@ function HelmetDrivePage() {
 
           <div className="helmet-drive-main-stack">
             <section className="helmet-drive-section-card">
-              <h2>Story</h2>
+              <h2>{language === 'hi' ? 'कहानी' : 'Story'}</h2>
               <div className={`story-content ${storyExpanded ? "expanded" : ""}`}>
-                {STORY.map((paragraph) => (
-                  <p key={paragraph}>{paragraph}</p>
+                {STORY.map((item, idx) => (
+                  <p key={idx}>{language === 'hi' ? item.hi : item.en}</p>
                 ))}
               </div>
               <button
@@ -195,14 +214,14 @@ function HelmetDrivePage() {
                 className="text-action"
                 onClick={() => setStoryExpanded((current) => !current)}
               >
-                {storyExpanded ? "Read Less" : "Read More"}
+                {storyExpanded ? (language === 'hi' ? 'कम दिखाएं' : 'Read Less') : (language === 'hi' ? 'और पढ़ें' : 'Read More')}
               </button>
             </section>
 
             <section className="helmet-drive-section-card">
               <div className="section-head">
-                <h2>Recent Donations</h2>
-                <span>524 Donations</span>
+                <h2>{language === 'hi' ? 'हाल के दान' : 'Recent Donations'}</h2>
+                <span>524 {language === 'hi' ? 'दान' : 'Donations'}</span>
               </div>
 
               <div className="donation-list">
@@ -220,27 +239,27 @@ function HelmetDrivePage() {
 
               <div className="section-links">
                 <button type="button" onClick={() => setDonationModalType("top")}>
-                  View Top Donations
+                  {language === 'hi' ? 'शीर्ष दान देखें' : 'View Top Donations'}
                 </button>
                 <button type="button" onClick={() => setDonationModalType("all")}>
-                  View All Donations
+                  {language === 'hi' ? 'सभी दान देखें' : 'View All Donations'}
                 </button>
               </div>
             </section>
 
             <section className="support-panel">
-              <h2>Support the fundraiser</h2>
-              <p>Just Rs 500 can provide a certified helmet and save a breadwinner's life.</p>
+              <h2>{t("supportTitle") || "Support the fundraiser"}</h2>
+              <p>{t("supportDesc") || "Just Rs 500 can provide a certified helmet and save a breadwinner's life."}</p>
               <div className="support-actions">
-                <Link to="/donate" className="campaign-btn campaign-btn-primary">
-                  Donate Now
+                <Link to="/donate" state={{ serviceImage: helmetDriveImg, serviceTitle: t("title") }} className="campaign-btn campaign-btn-primary">
+                  {t("donateNow")}
                 </Link>
                 <button
                   type="button"
                   className="campaign-btn campaign-btn-secondary"
                   onClick={handleShare}
                 >
-                  Share
+                  {t("share")}
                 </button>
               </div>
             </section>
@@ -293,24 +312,24 @@ function HelmetDrivePage() {
             </section>
 
             <section className="helmet-drive-section-card faq-section">
-              <h2>FAQs</h2>
-              <p className="faq-intro">Everything you need to know before you donate.</p>
+              <h2>{language === 'hi' ? 'अक्सर पूछे जाने वाले प्रश्न' : 'FAQs'}</h2>
+              <p className="faq-intro">{language === 'hi' ? 'दान करने से पहले आपको जो कुछ जानने की जरूरत है।' : 'Everything you need to know before you donate.'}</p>
 
               <div className="faq-list">
                 {FAQS.map((faq, index) => {
                   const isOpen = openFaq === index;
                   return (
-                    <article key={faq.question} className={`faq-item ${isOpen ? "open" : ""}`}>
+                    <article key={index} className={`faq-item ${isOpen ? "open" : ""}`}>
                       <button
                         type="button"
                         className="faq-question"
                         onClick={() => setOpenFaq(isOpen ? null : index)}
                         aria-expanded={isOpen}
                       >
-                        <span>{faq.question}</span>
+                        <span>{language === 'hi' ? faq.questionHi : faq.question}</span>
                         <FaChevronDown aria-hidden="true" />
                       </button>
-                      {isOpen && <p className="faq-answer">{faq.answer}</p>}
+                      {isOpen && <p className="faq-answer">{language === 'hi' ? faq.answerHi : faq.answer}</p>}
                     </article>
                   );
                 })}

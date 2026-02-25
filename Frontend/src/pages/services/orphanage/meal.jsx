@@ -8,6 +8,8 @@ import {
     FaShieldAlt,
     FaUserCircle,
 } from "react-icons/fa";
+import { useLanguage, translate } from "../../../utils/useLanguage.jsx";
+import { mealTranslations } from "../../../utils/serviceTranslations.js";
 import orphanMeal from "../../../assets/images/orphanage/food.webp";
 import "./meal.css";
 
@@ -27,32 +29,52 @@ const FAQS = [
     {
         question: "How does this meal fundraiser help children?",
         answer: "Funds are used to provide high-quality, nutritious meals, including fresh fruits, milk, and balanced diets, ensuring healthy development for orphans.",
+        questionHi: "यह भोजन धन संचय बच्चों को कैसे मदद करता है?",
+        answerHi: "धन का उपयोग ताजे फल, दूध और संतुलित आहार सहित उच्च गुणवत्ता वाले पौष्टिक भोजन प्रदान करने के लिए किया जाता है, जो अनाथों के स्वस्थ विकास को सुनिश्चित करता है।",
     },
     {
         question: "Is my donation secure?",
         answer: "Yes. Donations are processed through secure payment channels and campaign-level records are maintained for accountability.",
+        questionHi: "क्या मेरा दान सुरक्षित है?",
+        answerHi: "हाँ। दान को सुरक्षित भुगतान चैनलों के माध्यम से संसाधित किया जाता है और जवाबदेही के लिए अभियान-स्तरीय रिकॉर्ड बनाए रखे जाते हैं।",
     },
     {
         question: "Will I get donation confirmation?",
         answer: "Yes. You receive confirmation as soon as your contribution is completed successfully.",
+        questionHi: "क्या मुझे दान की पुष्टि मिलेगी?",
+        answerHi: "हाँ। आप अपना योगदान सफलतापूर्वक पूर्ण होते ही पुष्टि प्राप्त करते हैं।",
     },
     {
         question: "Can I support this fundraiser monthly?",
         answer: "Yes. You can return and donate again any time, or support related child welfare campaigns regularly.",
+        questionHi: "क्या मैं इस धन संचय को मासिक समर्थन कर सकता हूँ?",
+        answerHi: "हाँ। आप कभी भी वापस आ सकते हैं और फिर से दान कर सकते हैं, या संबंधित बाल कल्याण अभियानों को नियमित रूप से समर्थन कर सकते हैं।",
     },
     {
         question: "Can I share this campaign with friends?",
         answer: "Yes. You can use the Share button to quickly send this page to your contacts and help this cause reach more people.",
+        questionHi: "क्या मैं इस अभियान को दोस्तों के साथ साझा कर सकता हूँ?",
+        answerHi: "हाँ। आप इस पृष्ठ को अपने संपर्कों को जल्दी भेजने के लिए साझा बटन का उपयोग कर सकते हैं।",
     },
 ];
 
 const STORY = [
-    "Proper nutrition is the foundation of a healthy childhood. Many children in orphanage care lack access to balanced and diverse meals necessary for their growth.",
-    "The 'Nutritious Meal' initiative ensures that every child receives the essential vitamins and minerals they need for physical and cognitive development.",
-    "Your support helps us provide fresh, healthy, and hygienic meals every day, giving these children the energy to learn, play, and thrive.",
+    {
+        en: "Proper nutrition is the foundation of a healthy childhood. Many children in orphanage care lack access to balanced and diverse meals necessary for their growth.",
+        hi: "उचित पोषण एक स्वस्थ बचपन की नींव है। अनाथालय देखभाल में कई बच्चों को अपने विकास के लिए आवश्यक संतुलित और विविध भोजन तक पहुंच नहीं है।",
+    },
+    {
+        en: "The 'Nutritious Meal' initiative ensures that every child receives the essential vitamins and minerals they need for physical and cognitive development.",
+        hi: "'पौष्टिक भोजन' पहल सुनिश्चित करती है कि प्रत्येक बच्चे को उनके शारीरिक और संज्ञानात्मक विकास के लिए आवश्यक आवश्यक विटामिन और खनिज मिलें।",
+    },
+    {
+        en: "Your support helps us provide fresh, healthy, and hygienic meals every day, giving these children the energy to learn, play, and thrive.",
+        hi: "आपका समर्थन हमें हर दिन ताजा, स्वस्थ और स्वच्छ भोजन प्रदान करने में मदद करता है, जिससे इन बच्चों को सीखने, खेलने और फलने-फूलने की शक्ति मिलती है।",
+    },
 ];
 
 function Meal() {
+    const { language } = useLanguage();
     const [storyExpanded, setStoryExpanded] = useState(false);
     const [openFaq, setOpenFaq] = useState(null);
     const [shareLabel, setShareLabel] = useState("Share");
@@ -65,7 +87,7 @@ function Meal() {
     );
     const modalDonations =
         donationModalType === "top" ? sortedDonations.slice(0, 10) : sortedDonations;
-    const modalTitle = donationModalType === "top" ? "Top Donations" : "All Donations";
+    const modalTitle = donationModalType === "top" ? translate("topDonations", mealTranslations, language) : translate("allDonations", mealTranslations, language);
 
     useEffect(() => {
         window.scrollTo(0, 0);
@@ -127,12 +149,12 @@ function Meal() {
                             </div>
 
                             <div className="campaign-body">
-                                <h1>Provide high-quality nutritious meals for orphans</h1>
-                                <p className="campaign-org">by Guardian of Angels Trust</p>
+                                <h1>{translate("title", mealTranslations, language)}</h1>
+                                <p className="campaign-org">{translate("organization", mealTranslations, language)}</p>
 
                                 <div className="campaign-amounts">
                                     <strong>Rs 1,50,000</strong>
-                                    <span>raised of Rs 3,00,000 goal</span>
+                                    <span>{translate("raisedOf", mealTranslations, language)} Rs 3,00,000 {translate("goal", mealTranslations, language)}</span>
                                 </div>
 
                                 <div className="campaign-progress" aria-hidden="true">
@@ -142,28 +164,28 @@ function Meal() {
                                 <div className="campaign-stats">
                                     <div>
                                         <strong>85</strong>
-                                        <span>Donors</span>
+                                        <span>{translate("donors", mealTranslations, language)}</span>
                                     </div>
                                     <div>
                                         <strong>20</strong>
-                                        <span>Days left</span>
+                                        <span>{translate("daysLeft", mealTranslations, language)}</span>
                                     </div>
                                     <div>
                                         <strong>50%</strong>
-                                        <span>Funded</span>
+                                        <span>{translate("funded", mealTranslations, language)}</span>
                                     </div>
                                 </div>
 
                                 <div className="campaign-actions">
-                                    <Link to="/donate" className="campaign-btn campaign-btn-primary">
-                                        Donate Now
+                                    <Link to="/donate" state={{ serviceImage: orphanMeal, serviceTitle: translate("title", mealTranslations, language) }} className="campaign-btn campaign-btn-primary">
+                                        {translate("donateNow", mealTranslations, language)}
                                     </Link>
                                     <button
                                         type="button"
                                         className="campaign-btn campaign-btn-secondary"
                                         onClick={handleShare}
                                     >
-                                        {shareLabel}
+                                        {shareLabel === "Share" ? translate("share", mealTranslations, language) : translate("linkCopied", mealTranslations, language)}
                                     </button>
                                 </div>
                             </div>
@@ -172,10 +194,10 @@ function Meal() {
 
                     <div className="meal-main-stack">
                         <section className="meal-section-card">
-                            <h2>Story</h2>
+                            <h2>{translate("storyTitle", mealTranslations, language)}</h2>
                             <div className={`story-content ${storyExpanded ? "expanded" : ""}`}>
-                                {STORY.map((paragraph) => (
-                                    <p key={paragraph}>{paragraph}</p>
+                                {STORY.map((item, idx) => (
+                                    <p key={idx}>{language === 'hi' ? item.hi : item.en}</p>
                                 ))}
                             </div>
                             <button
@@ -183,14 +205,14 @@ function Meal() {
                                 className="text-action"
                                 onClick={() => setStoryExpanded((current) => !current)}
                             >
-                                {storyExpanded ? "Read Less" : "Read More"}
+                                {storyExpanded ? translate("readLess", mealTranslations, language) : translate("readMore", mealTranslations, language)}
                             </button>
                         </section>
 
                         <section className="meal-section-card">
                             <div className="section-head">
-                                <h2>Recent Donations</h2>
-                                <span>{DONATIONS.length} Donations</span>
+                                <h2>{translate("recentDonations", mealTranslations, language)}</h2>
+                                <span>{DONATIONS.length} {translate("donationsLabel", mealTranslations, language) || "Donations"}</span>
                             </div>
 
                             <div className="donation-list">
@@ -198,7 +220,7 @@ function Meal() {
                                     <article key={`${donation.name}-${donation.amount}`} className="donation-item">
                                         <FaUserCircle aria-hidden="true" />
                                         <div>
-                                            <h3>{donation.name}</h3>
+                                            <h3>{donation.name === "Anonymous" ? translate("anonymous", mealTranslations, language) : donation.name}</h3>
                                             <p>{formatAmount(donation.amount)}</p>
                                         </div>
                                         <span>{donation.note}</span>
@@ -208,27 +230,27 @@ function Meal() {
 
                             <div className="section-links">
                                 <button type="button" onClick={() => setDonationModalType("top")}>
-                                    View Top Donations
+                                    {translate("topDonations", mealTranslations, language)}
                                 </button>
                                 <button type="button" onClick={() => setDonationModalType("all")}>
-                                    View All Donations
+                                    {translate("allDonations", mealTranslations, language)}
                                 </button>
                             </div>
                         </section>
 
                         <section className="support-panel">
-                            <h2>Support the Nutritious Meal initiative</h2>
-                            <p>Your contribution directly provides nourishment to children who need it most.</p>
+                            <h2>{translate("supportTitle", mealTranslations, language)}</h2>
+                            <p>{translate("supportDesc", mealTranslations, language)}</p>
                             <div className="support-actions">
-                                <Link to="/donate" className="campaign-btn campaign-btn-primary">
-                                    Donate Now
+                                <Link to="/donate" state={{ serviceImage: orphanMeal, serviceTitle: translate("title", mealTranslations, language) }} className="campaign-btn campaign-btn-primary">
+                                    {translate("donateNow", mealTranslations, language)}
                                 </Link>
                                 <button
                                     type="button"
                                     className="campaign-btn campaign-btn-secondary"
                                     onClick={handleShare}
                                 >
-                                    Share
+                                    {translate("share", mealTranslations, language)}
                                 </button>
                             </div>
                         </section>
@@ -274,24 +296,26 @@ function Meal() {
                         </section>
 
                         <section className="meal-section-card faq-section">
-                            <h2>FAQs</h2>
-                            <p className="faq-intro">Everything you need to know before you donate.</p>
+                            <h2>{translate("faqTitle", mealTranslations, language)}</h2>
+                            <p className="faq-intro">{translate("faqIntro", mealTranslations, language)}</p>
 
                             <div className="faq-list">
                                 {FAQS.map((faq, index) => {
                                     const isOpen = openFaq === index;
+                                    const question = language === 'hi' ? faq.questionHi : faq.question;
+                                    const answer = language === 'hi' ? faq.answerHi : faq.answer;
                                     return (
-                                        <article key={faq.question} className={`faq-item ${isOpen ? "open" : ""}`}>
+                                        <article key={index} className={`faq-item ${isOpen ? "open" : ""}`}>
                                             <button
                                                 type="button"
                                                 className="faq-question"
                                                 onClick={() => setOpenFaq(isOpen ? null : index)}
                                                 aria-expanded={isOpen}
                                             >
-                                                <span>{faq.question}</span>
+                                                <span>{question}</span>
                                                 <FaChevronDown aria-hidden="true" />
                                             </button>
-                                            {isOpen && <p className="faq-answer">{faq.answer}</p>}
+                                            {isOpen && <p className="faq-answer">{answer}</p>}
                                         </article>
                                     );
                                 })}
@@ -336,7 +360,7 @@ function Meal() {
                                 >
                                     <FaUserCircle aria-hidden="true" />
                                     <div>
-                                        <h3>{donation.name}</h3>
+                                        <h3>{donation.name === "Anonymous" ? translate("anonymous", mealTranslations, language) : donation.name}</h3>
                                         <p>{formatAmount(donation.amount)}</p>
                                     </div>
                                     <span>{donation.note}</span>

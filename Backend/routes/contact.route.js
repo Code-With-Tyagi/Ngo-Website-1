@@ -1,9 +1,24 @@
 import express from "express";
-import { createContact, getContacts } from "../controllers/contact.controller.js";
+import { 
+  createContact, 
+  getContacts,
+  getContactById,
+  updateContactStatus,
+  deleteContact,
+  replyToContact
+} from "../controllers/contact.controller.js";
+import { authenticate } from "../middlewares/auth.middleware.js";
 
 const router = express.Router();
 
-router.get("/all", getContacts);
+// Public routes
 router.post("/", createContact);
+
+// Protected admin routes
+router.get("/all", authenticate, getContacts);
+router.get("/:id", authenticate, getContactById);
+router.put("/:id/status", authenticate, updateContactStatus);
+router.post("/:id/reply", authenticate, replyToContact);
+router.delete("/:id", authenticate, deleteContact);
 
 export default router;

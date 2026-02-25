@@ -3,6 +3,7 @@ import { useLocation } from "react-router-dom";
 import Navbar from "./components/common/navbar.jsx";
 import Footer from "./components/common/footer.jsx";
 import AppRoutes from "./routes/AppRoute.jsx";
+import { FlashProvider } from "./components/common/FlashMessage.jsx";
 
 function App() {
   const location = useLocation();
@@ -24,19 +25,13 @@ function App() {
   }, [location.key]);
 
   useEffect(() => {
-    const handleFlashMessage = () => consumeFlashMessage();
-    window.addEventListener("flashMessage", handleFlashMessage);
-    return () => window.removeEventListener("flashMessage", handleFlashMessage);
-  }, []);
-
-  useEffect(() => {
     if (!flash?.message) return;
     const timer = setTimeout(() => setFlash(null), 4000);
     return () => clearTimeout(timer);
   }, [flash]);
 
   return (
-    <>
+    <FlashProvider>
       <Navbar />
       {flash?.message && (
         <div className={`flash-message ${flash.type || "info"}`}>
@@ -55,7 +50,7 @@ function App() {
         <AppRoutes />
       </main>
       <Footer />
-    </>
+    </FlashProvider>
   );
 }
 

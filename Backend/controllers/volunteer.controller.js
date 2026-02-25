@@ -1,4 +1,5 @@
 import Volunteer from "../models/volunteer.model.js";
+import User from "../models/user.model.js";
 
 // Create a new volunteer application
 
@@ -19,13 +20,6 @@ export const applyVolunteer = async (req, res) => {
       return res.status(409).json({
         success: false,
         message: "You have already submitted a volunteer application."
-      });
-    }
-
-    if (!req.file) {
-      return res.status(400).json({
-        success: false,
-        message: "ID Image proof is required"
       });
     }
 
@@ -51,6 +45,30 @@ export const applyVolunteer = async (req, res) => {
       declaration
     } = req.body;
 
+    // Only Aadhaar and PAN are accepted
+    if (idType !== "Aadhaar" && idType !== "PAN") {
+      return res.status(400).json({
+        success: false,
+        message: "Only Aadhaar Card or PAN Card are accepted as ID type"
+      });
+    }
+
+    // Validate Aadhaar format: 12 digits, must not start with 0 or 1
+    if (idType === "Aadhaar" && !/^[2-9]\d{11}$/.test(String(idNumber || "").trim())) {
+      return res.status(400).json({
+        success: false,
+        message: "Enter a valid 12-digit Aadhaar number (must not start with 0 or 1)"
+      });
+    }
+
+    // Validate PAN format: 5 letters + 4 digits + 1 letter
+    if (idType === "PAN" && !/^[A-Z]{5}[0-9]{4}[A-Z]$/.test(String(idNumber || "").trim().toUpperCase())) {
+      return res.status(400).json({
+        success: false,
+        message: "Enter a valid PAN number (e.g., ABCDE1234F)"
+      });
+    }
+
     const interestsArray = Array.isArray(interests)
       ? interests
       : interests
@@ -61,6 +79,23 @@ export const applyVolunteer = async (req, res) => {
       return res.status(400).json({
         success: false,
         message: "Select at least one area of interest"
+      });
+    }
+
+    // Verify that the user has actually completed KYC verification
+    const user = await User.findById(req.userId).select("aadhaarVerified panVerified").lean();
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    let kycVerified = false;
+    if (idType === "Aadhaar" && user.aadhaarVerified) kycVerified = true;
+    if (idType === "PAN" && user.panVerified) kycVerified = true;
+
+    if (!kycVerified) {
+      return res.status(400).json({
+        success: false,
+        message: `Please verify your ${idType} via OTP before submitting the application.`
       });
     }
 
@@ -82,7 +117,7 @@ export const applyVolunteer = async (req, res) => {
       skills,
       idType,
       idNumber,
-      idImage: req.file.filename, // storing file name
+      idVerified: true,
       emergencyName,
       emergencyPhone,
       bgCheck: toBool(bgCheck),
