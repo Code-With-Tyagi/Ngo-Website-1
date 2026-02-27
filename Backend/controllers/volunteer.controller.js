@@ -1,10 +1,10 @@
 import Volunteer from "../models/volunteer.model.js";
 import User from "../models/user.model.js";
+import asyncHandler from "../utils/asyncHandler.js";
 
 // Create a new volunteer application
 
-export const applyVolunteer = async (req, res) => {
-  try {
+export const applyVolunteer = asyncHandler(async (req, res) => {
     if (!req.userId) {
       return res.status(401).json({
         success: false,
@@ -131,18 +131,4 @@ export const applyVolunteer = async (req, res) => {
       volunteer
     });
 
-  } catch (error) {
-    if (error?.code === 11000 && error?.keyPattern?.user) {
-      return res.status(409).json({
-        success: false,
-        message: "You have already submitted a volunteer application."
-      });
-    }
-
-    const status = error.name === "ValidationError" ? 400 : 500;
-    res.status(status).json({
-      success: false,
-      message: error.message
-    });
-  }
-};
+});

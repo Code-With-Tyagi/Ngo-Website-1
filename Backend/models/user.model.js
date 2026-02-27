@@ -120,7 +120,7 @@ const userSchema = new mongoose.Schema({
 
 userSchema.index({ resetPasswordTokenHash: 1, resetPasswordExpiresAt: 1 });
 userSchema.index({ emailVerificationOtpHash: 1, emailVerificationOtpExpiresAt: 1 });
-userSchema.index({ googleId: 1 }, { unique: true, sparse: true });
+// userSchema.index({ googleId: 1 }, { unique: true, sparse: true });
 
 const User = mongoose.model("User", userSchema);
 export default User;

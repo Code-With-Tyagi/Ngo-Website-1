@@ -9,6 +9,7 @@ import {
     sendEmailVerificationOtpEmail
 } from "../services/mail.service.js";
 import "../config/loadEnv.js";
+import asyncHandler from "../utils/asyncHandler.js";
 
 const DEFAULT_BCRYPT_SALT_ROUNDS = 8;
 const BCRYPT_SALT_ROUNDS = (() => {
@@ -113,12 +114,12 @@ const verifyGoogleIdToken = async (idToken) => {
 };
 
 //Register a new user /api/register
-export const registerUser = async (req, res) => {
-    try {
+export const registerUser = asyncHandler(async (req, res) => {
         const { name, email, password } = req.body;
         const cleanName = String(name || "").trim();
         const cleanEmail = normalizeEmail(email);
-
+        console.log(req.body);
+        
         // Validation checks
         if (!cleanName || !cleanEmail || !password) {
             return res.status(400).json({ success: false, message: "All fields required" });
@@ -146,6 +147,9 @@ export const registerUser = async (req, res) => {
 
         // hashing the password before saving to database
         const hashedPassword = await bcrypt.hash(password, BCRYPT_SALT_ROUNDS);
+        console.log(hashedPassword);
+        
+
         const newUser = new User({
             name: cleanName,
             email: cleanEmail,
@@ -153,6 +157,8 @@ export const registerUser = async (req, res) => {
         });
         await newUser.save();
 
+        console.log(newUser ? `New user registered: ${newUser._id}` : "Failed to create new user");
+        
         // Generate token and set cookie
         const token = generateToken(res, newUser._id);
 
@@ -162,25 +168,10 @@ export const registerUser = async (req, res) => {
             token,
             data: toUserPayload(newUser)
         });
-    } catch (error) {
-        if (error?.code === 11000 && error?.keyPattern?.email) {
-            return res.status(409).json({
-                success: false,
-                message: "Email already registered. Please log in instead."
-            });
-        }
-
-        res.status(500).json({
-            success: false,
-            message: "Error registering user",
-            error: error.message
-        });
-    }
-}
+});
 
 // Login user /api/login
-export const loginUser = async (req, res) => {
-    try {
+export const loginUser = asyncHandler(async (req, res) => {
         const { email, password, loginType } = req.body;
         const cleanEmail = normalizeEmail(email);
         const isNgoLogin = loginType === "ngo";
@@ -256,18 +247,10 @@ export const loginUser = async (req, res) => {
             data: toUserPayload(user, ngoData),
             loginType: isNgoLogin ? "ngo" : "user"
         });
-    } catch (error) {
-        res.status(500).json({
-            success: false,
-            message: "Error logging in user",
-            error: error.message
-        });
-    }
-}
+});
 
 // Google login /api/google-login
-export const googleLogin = async (req, res) => {
-    try {
+export const googleLogin = asyncHandler(async (req, res) => {
         if (!googleClient || !GOOGLE_CLIENT_ID) {
             return res.status(503).json({
                 success: false,
@@ -362,25 +345,10 @@ export const googleLogin = async (req, res) => {
             token,
             data: toUserPayload(user)
         });
-    } catch (error) {
-        if (error?.code === 11000) {
-            return res.status(409).json({
-                success: false,
-                message: "Account already exists. Please try logging in again."
-            });
-        }
-
-        return res.status(500).json({
-            success: false,
-            message: "Error logging in with Google",
-            error: error.message
-        });
-    }
-};
+});
 
 // Forgot password /api/forgot-password
-export const forgotPassword = async (req, res) => {
-    try {
+export const forgotPassword = asyncHandler(async (req, res) => {
         const cleanEmail = normalizeEmail(req.body?.email);
         const genericMessage = "A password reset link has been sent. Please check your email.";
 
@@ -439,18 +407,10 @@ export const forgotPassword = async (req, res) => {
             success: true,
             message: genericMessage
         });
-    } catch (error) {
-        return res.status(500).json({
-            success: false,
-            message: "Failed to process forgot password request",
-            error: error.message
-        });
-    }
-};
+});
 
 // Reset password /api/reset-password/:token
-export const resetPassword = async (req, res) => {
-    try {
+export const resetPassword = asyncHandler(async (req, res) => {
         const token = String(req.params?.token || "").trim();
         const password = String(req.body?.password || "");
 
@@ -510,18 +470,10 @@ export const resetPassword = async (req, res) => {
             token: authToken,
             data: toUserPayload(user)
         });
-    } catch (error) {
-        return res.status(500).json({
-            success: false,
-            message: "Failed to reset password",
-            error: error.message
-        });
-    }
-};
+});
 
 // Send email verification OTP /api/email-verification/send-otp
-export const sendEmailVerificationOtp = async (req, res) => {
-    try {
+export const sendEmailVerificationOtp = asyncHandler(async (req, res) => {
         if (!req.userId) {
             return res.status(401).json({
                 success: false,
@@ -605,18 +557,10 @@ export const sendEmailVerificationOtp = async (req, res) => {
             message: `We sent a 6-digit OTP to ${user.email}`,
             resendCooldownSeconds: cooldownSeconds
         });
-    } catch (error) {
-        return res.status(500).json({
-            success: false,
-            message: "Failed to send verification OTP",
-            error: error.message
-        });
-    }
-};
+});
 
 // Verify email OTP /api/email-verification/verify-otp
-export const verifyEmailOtp = async (req, res) => {
-    try {
+export const verifyEmailOtp = asyncHandler(async (req, res) => {
         if (!req.userId) {
             return res.status(401).json({
                 success: false,
@@ -710,18 +654,10 @@ export const verifyEmailOtp = async (req, res) => {
             message: "Email verified successfully",
             data: toUserPayload(user)
         });
-    } catch (error) {
-        return res.status(500).json({
-            success: false,
-            message: "Failed to verify OTP",
-            error: error.message
-        });
-    }
-};
+});
 
 // Change current user's password /api/change-password
-export const changePassword = async (req, res) => {
-    try {
+export const changePassword = asyncHandler(async (req, res) => {
         if (!req.userId) {
             return res.status(401).json({
                 success: false,
@@ -793,18 +729,10 @@ export const changePassword = async (req, res) => {
             success: true,
             message: "Password changed successfully"
         });
-    } catch (error) {
-        return res.status(500).json({
-            success: false,
-            message: "Failed to change password",
-            error: error.message
-        });
-    }
-};
+});
 
 // Update current logged-in user profile /api/profile
-export const updateProfile = async (req, res) => {
-    try {
+export const updateProfile = asyncHandler(async (req, res) => {
         if (!req.userId) {
             return res.status(401).json({
                 success: false,
@@ -870,18 +798,10 @@ export const updateProfile = async (req, res) => {
             message: "Profile updated successfully",
             data: toUserPayload(user)
         });
-    } catch (error) {
-        return res.status(500).json({
-            success: false,
-            message: "Failed to update profile",
-            error: error.message
-        });
-    }
-};
+});
 
 // Get current logged-in user /api/profile
-export const getProfile = async (req, res) => {
-    try {
+export const getProfile = asyncHandler(async (req, res) => {
         if (!req.userId) {
             return res.status(401).json({
                 success: false,
@@ -904,18 +824,10 @@ export const getProfile = async (req, res) => {
             success: true,
             data: toUserPayload(user)
         });
-    } catch (error) {
-        return res.status(500).json({
-            success: false,
-            message: "Failed to fetch profile",
-            error: error.message
-        });
-    }
-};
+});
 
 // Logout user /api/logout
-export const logoutUser = async (req, res) => {
-    try {
+export const logoutUser = asyncHandler(async (req, res) => {
         res.cookie("token", "", {
             httpOnly: true,
             expires: new Date(0)
@@ -925,18 +837,10 @@ export const logoutUser = async (req, res) => {
             success: true,
             message: "User logged out successfully"
         });
-    } catch (error) {
-        res.status(500).json({
-            success: false,
-            message: "Error logging out user",
-            error: error.message
-        });
-    }
-}
+});
 
 // Admin Login /api/admin/login
-export const adminLogin = async (req, res) => {
-    try {
+export const adminLogin = asyncHandler(async (req, res) => {
         const { email, password } = req.body;
         const cleanEmail = normalizeEmail(email);
 
@@ -1003,12 +907,4 @@ export const adminLogin = async (req, res) => {
                 avatar: user.avatar || null
             }
         });
-    } catch (error) {
-        console.error(`[ADMIN LOGIN ERROR] ${new Date().toISOString()} - Error: ${error.message}`);
-        res.status(500).json({
-            success: false,
-            message: "Error during admin login",
-            error: error.message
-        });
-    }
-}
+});

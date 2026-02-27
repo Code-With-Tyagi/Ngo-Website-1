@@ -1,10 +1,10 @@
 import User from "../models/user.model.js";
 import { generateAadhaarOtp, verifyAadhaarOtp, verifyPanDetails } from "../services/sandbox.service.js";
+import asyncHandler from "../utils/asyncHandler.js";
 
 const REQUEST_TIMEOUT = 30000; // 30 seconds max for controller-level timeout
 
-export const requestAadhaarOtp = async (req, res) => {
-    try {
+export const requestAadhaarOtp = asyncHandler(async (req, res) => {
         const { aadhaarNumber } = req.body;
         const userId = req.userId;
 
@@ -39,23 +39,9 @@ export const requestAadhaarOtp = async (req, res) => {
                 error: result.data
             });
         }
-    } catch (error) {
-        console.error("Aadhaar OTP Request Error:", error.message);
-        const statusCode = error.message.includes("timeout") ? 504 : 500;
-        const message = error.message.includes("timeout") 
-            ? "OTP service is temporarily slow. Please try again in a moment."
-            : "Error requesting Aadhaar OTP";
-        
-        res.status(statusCode).json({
-            success: false,
-            message,
-            error: error.message
-        });
-    }
-};
+});
 
-export const verifyAadhaar = async (req, res) => {
-    try {
+export const verifyAadhaar = asyncHandler(async (req, res) => {
         const { reference_id, otp } = req.body;
         const userId = req.userId;
 
@@ -99,24 +85,10 @@ export const verifyAadhaar = async (req, res) => {
                 error: result.data
             });
         }
-    } catch (error) {
-        console.error("Aadhaar Verification Error:", error.message);
-        const statusCode = error.message.includes("timeout") ? 504 : 500;
-        const message = error.message.includes("timeout") 
-            ? "OTP verification is taking longer than expected. Please try again."
-            : "Error verifying Aadhaar OTP";
-        
-        res.status(statusCode).json({
-            success: false,
-            message,
-            error: error.message
-        });
-    }
-};
+});
 
 // PAN Card Verification
-export const verifyPan = async (req, res) => {
-    try {
+export const verifyPan = asyncHandler(async (req, res) => {
         const { pan, nameAsPerPan, dateOfBirth } = req.body;
         const userId = req.userId;
 
@@ -174,17 +146,4 @@ export const verifyPan = async (req, res) => {
                 error: result.data
             });
         }
-    } catch (error) {
-        console.error("PAN Verification Error:", error.message);
-        const statusCode = error.message.includes("timeout") ? 504 : 500;
-        const message = error.message.includes("timeout") 
-            ? "PAN verification is taking longer than expected. Please try again."
-            : "Error verifying PAN";
-        
-        res.status(statusCode).json({
-            success: false,
-            message,
-            error: error.message
-        });
-    }
-};
+});

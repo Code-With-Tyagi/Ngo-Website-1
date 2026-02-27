@@ -2,10 +2,10 @@ import User from "../models/user.model.js";
 import Ngo from "../models/ngo.model.js";
 import Volunteer from "../models/volunteer.model.js";
 import Contact from "../models/contact.model.js";
+import asyncHandler from "../utils/asyncHandler.js";
 
 // ─── Dashboard Stats ───
-export const getDashboardStats = async (req, res) => {
-    try {
+export const getDashboardStats = asyncHandler(async (req, res) => {
         const [
             totalUsers,
             totalNgos,
@@ -55,14 +55,10 @@ export const getDashboardStats = async (req, res) => {
                 }
             }
         });
-    } catch (error) {
-        return res.status(500).json({ success: false, message: error.message });
-    }
-};
+});
 
 // ─── NGO Management ───
-export const getAllNgos = async (req, res) => {
-    try {
+export const getAllNgos = asyncHandler(async (req, res) => {
         const { status, search, page = 1, limit = 20 } = req.query;
         const filter = {};
 
@@ -93,13 +89,9 @@ export const getAllNgos = async (req, res) => {
                 totalPages: Math.ceil(total / Number(limit))
             }
         });
-    } catch (error) {
-        return res.status(500).json({ success: false, message: error.message });
-    }
-};
+});
 
-export const updateNgoStatus = async (req, res) => {
-    try {
+export const updateNgoStatus = asyncHandler(async (req, res) => {
         const { id } = req.params;
         const { isVerified } = req.body;
 
@@ -157,26 +149,18 @@ export const updateNgoStatus = async (req, res) => {
             message: `NGO ${isVerified ? "approved" : "rejected"} successfully`,
             data: ngo
         });
-    } catch (error) {
-        return res.status(500).json({ success: false, message: error.message });
-    }
-};
+});
 
-export const deleteNgo = async (req, res) => {
-    try {
+export const deleteNgo = asyncHandler(async (req, res) => {
         const ngo = await Ngo.findByIdAndDelete(req.params.id);
         if (!ngo) {
             return res.status(404).json({ success: false, message: "NGO not found" });
         }
         return res.status(200).json({ success: true, message: "NGO deleted successfully" });
-    } catch (error) {
-        return res.status(500).json({ success: false, message: error.message });
-    }
-};
+});
 
 // ─── Volunteer Management ───
-export const getAllVolunteers = async (req, res) => {
-    try {
+export const getAllVolunteers = asyncHandler(async (req, res) => {
         const { status, search, page = 1, limit = 20 } = req.query;
         const filter = {};
 
@@ -207,13 +191,9 @@ export const getAllVolunteers = async (req, res) => {
                 totalPages: Math.ceil(total / Number(limit))
             }
         });
-    } catch (error) {
-        return res.status(500).json({ success: false, message: error.message });
-    }
-};
+});
 
-export const updateVolunteerStatus = async (req, res) => {
-    try {
+export const updateVolunteerStatus = asyncHandler(async (req, res) => {
         const { id } = req.params;
         const { status } = req.body;
 
@@ -236,26 +216,18 @@ export const updateVolunteerStatus = async (req, res) => {
             message: `Volunteer ${status.toLowerCase()} successfully`,
             data: volunteer
         });
-    } catch (error) {
-        return res.status(500).json({ success: false, message: error.message });
-    }
-};
+});
 
-export const deleteVolunteer = async (req, res) => {
-    try {
+export const deleteVolunteer = asyncHandler(async (req, res) => {
         const volunteer = await Volunteer.findByIdAndDelete(req.params.id);
         if (!volunteer) {
             return res.status(404).json({ success: false, message: "Volunteer not found" });
         }
         return res.status(200).json({ success: true, message: "Volunteer deleted successfully" });
-    } catch (error) {
-        return res.status(500).json({ success: false, message: error.message });
-    }
-};
+});
 
 // ─── Contact Management ───
-export const getAllContacts = async (req, res) => {
-    try {
+export const getAllContacts = asyncHandler(async (req, res) => {
         const { status, search, page = 1, limit = 20 } = req.query;
         const filter = {};
 
@@ -287,13 +259,9 @@ export const getAllContacts = async (req, res) => {
                 totalPages: Math.ceil(total / Number(limit))
             }
         });
-    } catch (error) {
-        return res.status(500).json({ success: false, message: error.message });
-    }
-};
+});
 
-export const updateContactStatus = async (req, res) => {
-    try {
+export const updateContactStatus = asyncHandler(async (req, res) => {
         const { id } = req.params;
         const { status } = req.body;
 
@@ -316,26 +284,18 @@ export const updateContactStatus = async (req, res) => {
             message: `Contact marked as ${status}`,
             data: contact
         });
-    } catch (error) {
-        return res.status(500).json({ success: false, message: error.message });
-    }
-};
+});
 
-export const deleteContact = async (req, res) => {
-    try {
+export const deleteContact = asyncHandler(async (req, res) => {
         const contact = await Contact.findByIdAndDelete(req.params.id);
         if (!contact) {
             return res.status(404).json({ success: false, message: "Contact not found" });
         }
         return res.status(200).json({ success: true, message: "Contact deleted successfully" });
-    } catch (error) {
-        return res.status(500).json({ success: false, message: error.message });
-    }
-};
+});
 
 // ─── User Management ───
-export const getAllUsers = async (req, res) => {
-    try {
+export const getAllUsers = asyncHandler(async (req, res) => {
         const { search, page = 1, limit = 20 } = req.query;
         const filter = { role: { $ne: "admin" } };
 
@@ -367,7 +327,4 @@ export const getAllUsers = async (req, res) => {
                 totalPages: Math.ceil(total / Number(limit))
             }
         });
-    } catch (error) {
-        return res.status(500).json({ success: false, message: error.message });
-    }
-};
+});
