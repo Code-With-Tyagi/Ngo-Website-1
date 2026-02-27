@@ -64,3 +64,41 @@ export const authenticate = async (req, res, next) => {
 
 // Alias for backwards compatibility
 export const verifyToken = authenticate;
+
+// Optional authentication - doesn't fail if no token, just sets req.user if available
+export const optionalAuth = async (req, res, next) => {
+    try {
+        const authHeader = String(req.headers.authorization || "");
+        const bearerToken = authHeader.startsWith("Bearer ")
+            ? authHeader.slice(7).trim()
+            : "";
+        const token = req.cookies?.token || bearerToken;
+
+        if (!token) {
+            req.user = null;
+            return next();
+        }
+
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const user = await User.findById(decoded.userId).select("-password");
+        
+        if (user) {
+            req.user = {
+                _id: user._id,
+                id: user._id,
+                userId: decoded.userId,
+                name: user.name,
+                email: user.email,
+                role: user.role,
+                ngoId: user.ngoId,
+                ngoRole: user.ngoRole
+            };
+        } else {
+            req.user = null;
+        }
+        next();
+    } catch (error) {
+        req.user = null;
+        next();
+    }
+};

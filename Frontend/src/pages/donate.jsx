@@ -26,7 +26,7 @@ const Donate = () => {
   const [citizenConfirmed, setCitizenConfirmed] = useState(false);
 
   // Calculate amounts
-  const donationAmount = customAmount || selectedAmount;
+  const donationAmount = customAmount ? parseInt(customAmount) : (selectedAmount || 3000);
   const tipAmount = Math.floor((donationAmount * tipPercentage) / 100);
   const totalAmount = donationAmount + tipAmount;
 
@@ -37,13 +37,21 @@ const Donate = () => {
 
   const handleCustomAmountChange = (e) => {
     const value = e.target.value;
-    if (value === "" || (parseInt(value) >= 300 && !isNaN(value))) {
+    // Allow empty or any numeric input while typing (validate min amount on submit)
+    if (value === "" || /^\d+$/.test(value)) {
       setCustomAmount(value);
+      // Clear preset selection when typing custom amount
+      if (value) setSelectedAmount(null);
     }
   };
 
   const handleProceedPayment = (e) => {
     e.preventDefault();
+    // Validate minimum donation amount
+    if (customAmount && parseInt(customAmount) < 300) {
+      alert("Minimum donation amount is ₹300");
+      return;
+    }
     if (!citizenConfirmed) {
       alert("Please confirm you are an Indian citizen");
       return;

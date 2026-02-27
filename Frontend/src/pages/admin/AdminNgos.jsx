@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
 import { API_BASE_URL } from "./AdminLayout.jsx";
-import { ChevronDown, ChevronUp, FileText } from "lucide-react";
+import { ChevronDown, ChevronUp, FileText, CheckCircle, Clock, Trash2 } from "lucide-react";
 
 function AdminNgos() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -140,7 +140,7 @@ function AdminNgos() {
                         backgroundColor: n.isVerified ? "#d1fae5" : "#fef3c7",
                         color: n.isVerified ? "#065f46" : "#92400e"
                       }}>
-                        {n.isVerified ? "✓ Verified" : "⏳ Pending"}
+                        {n.isVerified ? <><CheckCircle size={14} style={{ marginRight: 4 }} /> Verified</> : <><Clock size={14} style={{ marginRight: 4 }} /> Pending</>}
                       </span>
                       {expandedId === n._id ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
                     </div>
@@ -323,7 +323,7 @@ function AdminNgos() {
                           disabled={actionLoading === n._id}
                           onClick={() => deleteNgo(n._id, n.ngoName)}
                         >
-                          🗑 Delete
+                          <Trash2 size={14} style={{ marginRight: 4 }} /> Delete
                         </button>
                       </div>
                     </div>

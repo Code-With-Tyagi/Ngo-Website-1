@@ -13,7 +13,9 @@ import {
   addVideo,
   updateGalleryItem,
   deleteGalleryItem,
-  bulkDeleteGalleryItems
+  bulkDeleteGalleryItems,
+  approveGalleryItem,
+  rejectGalleryItem
 } from "../controllers/gallery.controller.js";
 
 const router = express.Router();
@@ -81,6 +83,12 @@ router.post("/admin/video", authenticate, verifyAdmin, upload.single("thumbnail"
 
 // Update gallery item (admin)
 router.put("/admin/:id", authenticate, verifyAdmin, updateGalleryItem);
+
+// Approve gallery item (admin)
+router.put("/admin/:id/approve", authenticate, verifyAdmin, approveGalleryItem);
+
+// Reject gallery item (admin)
+router.put("/admin/:id/reject", authenticate, verifyAdmin, rejectGalleryItem);
 
 // Delete gallery item (admin)
 router.delete("/admin/:id", authenticate, verifyAdmin, deleteGalleryItem);

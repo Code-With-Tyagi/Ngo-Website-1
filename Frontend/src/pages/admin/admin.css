@@ -2,10 +2,20 @@
    ADMIN PANEL STYLES — SevaIndia
    ═══════════════════════════════════════════ */
 
+/* Spin animation for loading icons */
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.spin {
+  animation: spin 1s linear infinite;
+}
+
 .admin-layout {
   display: flex;
-  min-height: calc(100vh - 70px);
-  background: #f1f5f9;
+  min-height: 100vh;
+  /* background removed to prevent white space above admin panel */
 }
 
 /* ── Sidebar ── */
@@ -18,13 +28,13 @@
   flex-direction: column;
   flex-shrink: 0;
   position: sticky;
-  top: 70px;
-  height: calc(100vh - 70px);
+  top: 0;
+  height: 100vh;
   overflow-y: auto;
 }
 
 .admin-sidebar-header {
-  padding: 24px 20px 16px;
+  padding: 8px 16px 8px;
   border-bottom: 1px solid #334155;
 }
 
@@ -103,7 +113,7 @@
 /* ── Main Content ── */
 .admin-content {
   flex: 1;
-  padding: 28px 32px;
+  padding: 0 32px;
   overflow-x: auto;
   min-width: 0;
 }
@@ -500,4 +510,22 @@
   font-size: 0.88rem;
   line-height: 1.6;
   white-space: pre-wrap;
+}
+
+.admin-logout-btn {
+  margin: 18px 20px 20px 20px;
+  padding: 12px 0;
+  width: calc(100% - 40px);
+  background: #ef4444;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.admin-logout-btn:hover {
+  background: #b91c1c;
 }

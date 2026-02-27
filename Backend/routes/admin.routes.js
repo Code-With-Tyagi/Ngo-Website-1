@@ -1,6 +1,7 @@
 import express from "express";
 import { verifyToken } from "../middlewares/auth.middleware.js";
 import { verifyAdmin } from "../middlewares/admin.middleware.js";
+import { adminLogin } from "../controllers/auth.controller.js";
 import {
     getDashboardStats,
     getAllNgos,
@@ -17,7 +18,10 @@ import {
 
 const router = express.Router();
 
-// All routes require auth + admin role
+// Admin login (no auth required)
+router.post("/login", adminLogin);
+
+// All other routes require auth + admin role
 router.use(verifyToken, verifyAdmin);
 
 // Dashboard

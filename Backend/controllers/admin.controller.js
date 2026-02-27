@@ -107,15 +107,50 @@ export const updateNgoStatus = async (req, res) => {
             return res.status(400).json({ success: false, message: "isVerified must be a boolean" });
         }
 
-        const ngo = await Ngo.findByIdAndUpdate(
-            id,
-            { $set: { isVerified } },
-            { new: true }
-        );
-
+        const ngo = await Ngo.findById(id);
         if (!ngo) {
             return res.status(404).json({ success: false, message: "NGO not found" });
         }
+
+        // Update NGO verification status
+        ngo.isVerified = isVerified;
+
+        // If approving, link the user to the NGO
+        if (isVerified) {
+            // First check if NGO already has an owner
+            let ownerUser = null;
+            
+            if (ngo.ownerId) {
+                // Owner was set during registration (user was logged in)
+                ownerUser = await User.findById(ngo.ownerId);
+            }
+            
+            // If no owner yet, try to find user by NGO email
+            if (!ownerUser) {
+                ownerUser = await User.findOne({ email: ngo.email.toLowerCase() });
+            }
+
+            // Link user to NGO if found
+            if (ownerUser) {
+                ownerUser.ngoId = ngo._id;
+                ownerUser.ngoRole = "owner";
+                await ownerUser.save();
+                
+                // Also update NGO's ownerId if not set
+                if (!ngo.ownerId) {
+                    ngo.ownerId = ownerUser._id;
+                }
+            }
+        } else {
+            // If rejecting/revoking, optionally unlink user
+            if (ngo.ownerId) {
+                await User.findByIdAndUpdate(ngo.ownerId, {
+                    $set: { ngoId: null, ngoRole: null }
+                });
+            }
+        }
+
+        await ngo.save();
 
         return res.status(200).json({
             success: true,

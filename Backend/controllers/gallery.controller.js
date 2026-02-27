@@ -123,11 +123,12 @@ export const getCategories = async (req, res) => {
  */
 export const getAllGalleryItems = async (req, res) => {
   try {
-    const { type, category, search, page = 1, limit = 20 } = req.query;
+    const { type, category, status, search, page = 1, limit = 20 } = req.query;
     
     const query = {};
     if (type) query.type = type;
     if (category && category !== "all") query.category = category;
+    if (status && status !== "all") query.approvalStatus = status;
     if (search) {
       query.$or = [
         { title: { $regex: search, $options: "i" } },
@@ -142,20 +143,28 @@ export const getAllGalleryItems = async (req, res) => {
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(parseInt(limit))
-        .populate("uploadedBy", "name email"),
+        .populate("uploadedBy", "name email")
+        .populate("ngoId", "ngoName"),
       Gallery.countDocuments(query)
     ]);
     
-    // Get counts by type
-    const [imageCount, videoCount] = await Promise.all([
+    // Add status field for frontend compatibility
+    const itemsWithStatus = items.map(item => ({
+      ...item.toObject(),
+      status: item.approvalStatus
+    }));
+    
+    // Get counts by type and pending
+    const [imageCount, videoCount, pendingCount] = await Promise.all([
       Gallery.countDocuments({ type: "image" }),
-      Gallery.countDocuments({ type: "video" })
+      Gallery.countDocuments({ type: "video" }),
+      Gallery.countDocuments({ approvalStatus: "pending" })
     ]);
     
     res.json({
       success: true,
-      items,
-      counts: { images: imageCount, videos: videoCount },
+      items: itemsWithStatus,
+      counts: { images: imageCount, videos: videoCount, pending: pendingCount },
       pagination: {
         total,
         page: parseInt(page),
@@ -402,6 +411,63 @@ export const bulkDeleteGalleryItems = async (req, res) => {
   } catch (error) {
     console.error("Error bulk deleting gallery items:", error);
     res.status(500).json({ success: false, message: "Failed to delete items" });
+  }
+};
+
+/**
+ * Approve gallery item (admin)
+ * PUT /api/gallery/admin/:id/approve
+ */
+export const approveGalleryItem = async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const item = await Gallery.findById(id);
+    if (!item) {
+      return res.status(404).json({ success: false, message: "Gallery item not found" });
+    }
+    
+    item.approvalStatus = "approved";
+    item.rejectionReason = "";
+    await item.save();
+    
+    res.json({
+      success: true,
+      message: `${item.type === "image" ? "Image" : "Video"} approved successfully`,
+      item
+    });
+  } catch (error) {
+    console.error("Error approving gallery item:", error);
+    res.status(500).json({ success: false, message: "Failed to approve item" });
+  }
+};
+
+/**
+ * Reject gallery item (admin)
+ * PUT /api/gallery/admin/:id/reject
+ */
+export const rejectGalleryItem = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { reason } = req.body;
+    
+    const item = await Gallery.findById(id);
+    if (!item) {
+      return res.status(404).json({ success: false, message: "Gallery item not found" });
+    }
+    
+    item.approvalStatus = "rejected";
+    item.rejectionReason = reason || "Content not approved";
+    await item.save();
+    
+    res.json({
+      success: true,
+      message: `${item.type === "image" ? "Image" : "Video"} rejected`,
+      item
+    });
+  } catch (error) {
+    console.error("Error rejecting gallery item:", error);
+    res.status(500).json({ success: false, message: "Failed to reject item" });
   }
 };
 

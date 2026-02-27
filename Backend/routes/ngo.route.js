@@ -2,6 +2,7 @@ import express from "express";
 import multer from "multer";
 import upload from "../middlewares/uploadMiddleware.js";
 import { createNgo, getAllNgos, getNgoById } from "../controllers/ngo.controller.js";
+import { optionalAuth } from "../middlewares/auth.middleware.js";
 
 const router = express.Router();
 const ngoUpload = upload.fields([
@@ -39,6 +40,7 @@ const handleNgoUpload = (req, res, next) => {
 
 router.post(
   "/create",
+  optionalAuth,  // Capture logged-in user if available
   handleNgoUpload,
   createNgo
 );

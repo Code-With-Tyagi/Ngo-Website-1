@@ -14,12 +14,23 @@ import ResetPassword from "../pages/resetPassword.jsx";
 import Profile from "../pages/profile.jsx";
 
 import AdminLayout from "../pages/admin/AdminLayout.jsx";
+import AdminLogin from "../pages/admin/AdminLogin.jsx";
 import AdminDashboard from "../pages/admin/AdminDashboard.jsx";
 import AdminNgos from "../pages/admin/AdminNgos.jsx";
 import AdminVolunteers from "../pages/admin/AdminVolunteers.jsx";
 import AdminContacts from "../pages/admin/AdminContacts.jsx";
 import AdminUsers from "../pages/admin/AdminUsers.jsx";
 import AdminGallery from "../pages/admin/AdminGallery.jsx";
+
+// NGO Dashboard imports
+import { 
+  NgoLayout, 
+  NgoDashboard, 
+  NgoProfile, 
+  NgoGallery, 
+  NgoVolunteers, 
+  NgoPending 
+} from "../pages/ngo/index.js";
 
 import GalleryImages from "../pages/gallery/GalleryImages.jsx";
 import GalleryVideos from "../pages/gallery/GalleryVideos.jsx";
@@ -130,8 +141,11 @@ function AppRoutes() {
           }
         />
         <Route path="/add-ngo" element={<AddNGO />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/forgot-password" element={<Navigate to="/login?forgot=1" replace />} />
+        <Route path="/login" element={<Navigate to="/login/user" replace />} />
+        <Route path="/login/user" element={<Login />} />
+        <Route path="/login/ngo" element={<Login />} />
+        <Route path="/login/admin" element={<AdminLogin />} />
+        <Route path="/forgot-password" element={<Navigate to="/login/user?forgot=1" replace />} />
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/reset-password/:token" element={<ResetPassword />} />
         <Route path="/contact" element={<Contact />} />
@@ -152,6 +166,16 @@ function AppRoutes() {
           <Route path="contacts" element={<AdminContacts />} />
           <Route path="gallery" element={<AdminGallery />} />
           <Route path="users" element={<AdminUsers />} />
+        </Route>
+
+        {/* NGO Dashboard Routes */}
+        <Route path="/ngo/pending" element={<NgoPending />} />
+        <Route path="/ngo" element={<NgoLayout />}>
+          <Route index element={<NgoDashboard />} />
+          <Route path="dashboard" element={<NgoDashboard />} />
+          <Route path="profile" element={<NgoProfile />} />
+          <Route path="gallery" element={<NgoGallery />} />
+          <Route path="volunteers" element={<NgoVolunteers />} />
         </Route>
 
       </Routes>

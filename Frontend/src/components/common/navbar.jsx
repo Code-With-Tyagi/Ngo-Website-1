@@ -3,6 +3,8 @@ import { useEffect, useState } from "react";
 import LanguageToggle from "../LanguageToggle.jsx";
 import "./navbar.css";
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+
 function Navbar() {
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -18,8 +20,43 @@ function Navbar() {
 
   const [isLoggedIn, setIsLoggedIn] = useState(Boolean(localStorage.getItem("token")));
   const [user, setUser] = useState(readUser());
+  const [hasNgo, setHasNgo] = useState(false);
+  const [ngoStatus, setNgoStatus] = useState(null);
   const userInitial = user?.name ? user.name.charAt(0).toUpperCase() : "U";
   const isAdmin = user?.role === "admin";
+
+  // Check if user has an NGO
+  useEffect(() => {
+    const checkNgoStatus = async () => {
+      const token = localStorage.getItem("token");
+      if (!token || isAdmin) {
+        setHasNgo(false);
+        return;
+      }
+      
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/ngo-dashboard/status`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        
+        if (res.ok) {
+          const data = await res.json();
+          if (data.status !== 'none') {
+            setHasNgo(true);
+            setNgoStatus(data.status); // 'pending', 'approved'
+          } else {
+            setHasNgo(false);
+          }
+        }
+      } catch (err) {
+        console.error('Failed to check NGO status:', err);
+      }
+    };
+
+    if (isLoggedIn && !isAdmin) {
+      checkNgoStatus();
+    }
+  }, [isLoggedIn, isAdmin]);
 
   useEffect(() => {
     const syncAuth = () => {
@@ -79,13 +116,6 @@ function Navbar() {
         <ul className="navbar-menu">
           <li><Link to="/">Home</Link></li>
           <li><Link to="/services">Services</Link></li>
-          <li className="dropdown gallery-dropdown">
-            <span className="dropdown-trigger">Gallery <span className="dropdown-arrow">▼</span></span>
-            <ul className="dropdown-menu gallery-menu">
-              <li><Link to="/gallery/images">📷 Images</Link></li>
-              <li><Link to="/gallery/videos">🎥 Videos</Link></li>
-            </ul>
-          </li>
           <li><Link to="/find-ngos">Find NGOs</Link></li>
           <li><Link to="/donate">Donate</Link></li>
           <li><Link to="/volunteer">Volunteer</Link></li>
@@ -101,11 +131,31 @@ function Navbar() {
                 {userInitial}
               </div>
               <ul className="dropdown-menu profile-menu-right">
-                <li>
-                  <Link to={isAdmin ? "/admin" : "/profile"} className="profile-link">
-                    {isAdmin ? "Admin Panel" : "My Profile"}
-                  </Link>
-                </li>
+                {isAdmin ? (
+                  <li>
+                    <Link to="/admin" className="profile-link">
+                      Admin Panel
+                    </Link>
+                  </li>
+                ) : hasNgo ? (
+                  <li>
+                    <Link 
+                      to={ngoStatus === 'approved' ? "/ngo/dashboard" : "/ngo/pending"} 
+                      className="profile-link ngo-link"
+                    >
+                      <span className="link-icon">My NGO</span>
+                      {ngoStatus === 'pending' && (
+                        <span className="pending-badge">Pending</span>
+                      )}
+                    </Link>
+                  </li>
+                ) : (
+                  <li>
+                    <Link to="/profile" className="profile-link">
+                      My Profile
+                    </Link>
+                  </li>
+                )}
                 <li>
                   <button onClick={handleLogout} className="dropdown-logout-btn">
                     Logout
@@ -151,12 +201,6 @@ function Navbar() {
             <Link to="/services">Services</Link>
           </li>
           <li onClick={() => setMenuOpen(false)}>
-            <Link to="/gallery/images">📷 Gallery - Images</Link>
-          </li>
-          <li onClick={() => setMenuOpen(false)}>
-            <Link to="/gallery/videos">🎥 Gallery - Videos</Link>
-          </li>
-          <li onClick={() => setMenuOpen(false)}>
             <Link to="/services/medical/cancer">Cancer Support</Link>
           </li>
           <li onClick={() => setMenuOpen(false)}>
@@ -181,9 +225,27 @@ function Navbar() {
                 style={{ borderTop: "2px solid #f0f0f0", marginTop: "10px" }}
                 onClick={() => setMenuOpen(false)}
               >
-                <Link to={isAdmin ? "/admin" : "/profile"} style={{ display: "flex", alignItems: "center", gap: "10px", ...(isAdmin ? { color: "#1e40af", fontWeight: "bold" } : {}) }}>
-                  {isAdmin ? "📊 Admin Panel" : (<><div className="profile-icon mobile-icon">{userInitial}</div>My Profile</>)}
-                </Link>
+                {isAdmin ? (
+                  <Link to="/admin" style={{ display: "flex", alignItems: "center", gap: "10px", color: "#1e40af", fontWeight: "bold" }}>
+                    📊 Admin Panel
+                  </Link>
+                ) : hasNgo ? (
+                  <Link 
+                    to={ngoStatus === 'approved' ? "/ngo/dashboard" : "/ngo/pending"} 
+                    style={{ display: "flex", alignItems: "center", gap: "10px", color: "#7c3aed", fontWeight: "bold" }}
+                  >
+                    🏢 My NGO
+                    {ngoStatus === 'pending' && (
+                      <span style={{ fontSize: '0.7rem', background: '#fef3c7', color: '#92400e', padding: '2px 6px', borderRadius: '4px' }}>
+                        Pending
+                      </span>
+                    )}
+                  </Link>
+                ) : (
+                  <Link to="/profile" style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                    <div className="profile-icon mobile-icon">{userInitial}</div>My Profile
+                  </Link>
+                )}
               </li>
               <li>
                 <button

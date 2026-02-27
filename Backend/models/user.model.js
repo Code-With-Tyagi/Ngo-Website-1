@@ -102,6 +102,17 @@ const userSchema = new mongoose.Schema({
     panVerificationData: {
         type: mongoose.Schema.Types.Mixed,
         default: null
+    },
+    // --- NGO Dashboard Access ---
+    ngoId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Ngo",
+        default: null
+    },
+    ngoRole: {
+        type: String,
+        enum: ["owner", "manager", "coordinator", null],
+        default: null
     }
 }, {
     timestamps: true

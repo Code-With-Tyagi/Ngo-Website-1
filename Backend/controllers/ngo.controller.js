@@ -198,12 +198,14 @@ export const createNgo = async (req, res) => {
       services: toArray(req.body.services),
       otherService,
       documents,
-      agreeToTerms: true
+      agreeToTerms: true,
+      // Link to logged-in user if available
+      ownerId: req.user?._id || null
     });
 
     return res.status(201).json({
       success: true,
-      message: "NGO registered successfully",
+      message: "NGO registered successfully. Your application is under review.",
       ngo
     });
   } catch (error) {

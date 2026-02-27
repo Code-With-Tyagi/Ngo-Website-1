@@ -137,6 +137,35 @@ const ngoSchema = new mongoose.Schema({
   isVerified: {
     type: Boolean,
     default: false // Set to true only after admin verification
+  },
+  
+  // --- Ownership & Team ---
+  ownerId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+    default: null
+  },
+  teamMembers: [{
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User"
+    },
+    role: {
+      type: String,
+      enum: ["manager", "coordinator"],
+      default: "coordinator"
+    },
+    addedAt: {
+      type: Date,
+      default: Date.now
+    }
+  }],
+  
+  // --- Statistics (cached for dashboard) ---
+  stats: {
+    totalDonations: { type: Number, default: 0 },
+    totalVolunteers: { type: Number, default: 0 },
+    totalGalleryItems: { type: Number, default: 0 }
   }
 }, {
   timestamps: true // Automatically adds createdAt and updatedAt

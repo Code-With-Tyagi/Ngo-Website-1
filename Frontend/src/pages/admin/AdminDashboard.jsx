@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import { Users, Building2, Clock, CheckCircle, Handshake, Mail, Bell } from "lucide-react";
 import { API_BASE_URL } from "./AdminLayout.jsx";
 
 function AdminDashboard() {
@@ -24,14 +25,14 @@ function AdminDashboard() {
   const { stats, recent } = data;
 
   const statCards = [
-    { label: "Total Users", value: stats.totalUsers, icon: "👥", bg: "#dbeafe", color: "#1e40af", link: "/admin/users" },
-    { label: "Total NGOs", value: stats.totalNgos, icon: "🏢", bg: "#f0fdf4", color: "#166534" },
-    { label: "Pending NGOs", value: stats.pendingNgos, icon: "⏳", bg: "#fef9c3", color: "#854d0e", link: "/admin/ngos?status=pending" },
-    { label: "Verified NGOs", value: stats.verifiedNgos, icon: "✅", bg: "#dcfce7", color: "#166534" },
-    { label: "Total Volunteers", value: stats.totalVolunteers, icon: "🤝", bg: "#ede9fe", color: "#5b21b6" },
-    { label: "Pending Volunteers", value: stats.pendingVolunteers, icon: "⏳", bg: "#fef9c3", color: "#854d0e", link: "/admin/volunteers?status=Pending" },
-    { label: "Total Contacts", value: stats.totalContacts, icon: "✉️", bg: "#fce7f3", color: "#9d174d" },
-    { label: "New Contacts", value: stats.newContacts, icon: "🔔", bg: "#fee2e2", color: "#991b1b", link: "/admin/contacts?status=New" },
+    { label: "Total Users", value: stats.totalUsers, icon: Users, bg: "#dbeafe", color: "#1e40af", link: "/admin/users" },
+    { label: "Total NGOs", value: stats.totalNgos, icon: Building2, bg: "#f0fdf4", color: "#166534" },
+    { label: "Pending NGOs", value: stats.pendingNgos, icon: Clock, bg: "#fef9c3", color: "#854d0e", link: "/admin/ngos?status=pending" },
+    { label: "Verified NGOs", value: stats.verifiedNgos, icon: CheckCircle, bg: "#dcfce7", color: "#166534" },
+    { label: "Total Volunteers", value: stats.totalVolunteers, icon: Handshake, bg: "#ede9fe", color: "#5b21b6" },
+    { label: "Pending Volunteers", value: stats.pendingVolunteers, icon: Clock, bg: "#fef9c3", color: "#854d0e", link: "/admin/volunteers?status=Pending" },
+    { label: "Total Contacts", value: stats.totalContacts, icon: Mail, bg: "#fce7f3", color: "#9d174d" },
+    { label: "New Contacts", value: stats.newContacts, icon: Bell, bg: "#fee2e2", color: "#991b1b", link: "/admin/contacts?status=New" },
   ];
 
   const formatDate = (d) => d ? new Date(d).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : "—";
@@ -48,7 +49,7 @@ function AdminDashboard() {
             style={{ cursor: c.link ? "pointer" : "default" }}
             onClick={() => c.link && (window.location.hash = "", window.location.href = c.link)}
           >
-            <div className="admin-stat-icon" style={{ background: c.bg, color: c.color }}>{c.icon}</div>
+            <div className="admin-stat-icon" style={{ background: c.bg, color: c.color }}><c.icon size={24} /></div>
             <div className="admin-stat-info">
               <h3>{c.value}</h3>
               <p>{c.label}</p>

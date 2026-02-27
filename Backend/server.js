@@ -8,6 +8,7 @@ import contactRoutes from "./routes/contact.route.js";
 import kycRoutes from "./routes/kyc.routes.js";
 import adminRoutes from "./routes/admin.routes.js";
 import galleryRoutes from "./routes/gallery.routes.js";
+import ngoDashboardRoutes from "./routes/ngoDashboard.route.js";
 
 import "./config/loadEnv.js";
 import cors from "cors";
@@ -38,6 +39,7 @@ app.use("/uploads", express.static(path.join(__dirname, "uploads"), {
 app.use("/api", authRoutes);
 app.use("/api/volunteer", volunteerRoutes);
 app.use("/api/ngo", ngoRoutes);
+app.use("/api/ngo-dashboard", ngoDashboardRoutes);  // NGO Dashboard APIs
 app.use("/api/contact", contactRoutes);
 app.use("/api/kyc", kycRoutes);
 app.use("/api/admin", adminRoutes);

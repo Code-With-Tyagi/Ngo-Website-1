@@ -1,4 +1,5 @@
 import User from "../models/user.model.js";
+import Ngo from "../models/ngo.model.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
@@ -35,7 +36,7 @@ const generateToken = (res, userId) => {
 
 const normalizeEmail = (value) => String(value || "").trim().toLowerCase();
 
-const toUserPayload = (user) => ({
+const toUserPayload = (user, ngoData = null) => ({
     id: user._id,
     name: user.name,
     email: user.email,
@@ -48,7 +49,13 @@ const toUserPayload = (user) => ({
     avatar: user.avatar || null,
     authProvider: user.authProvider || "local",
     role: user.role || "user",
-    createdAt: user.createdAt || null
+    createdAt: user.createdAt || null,
+    // NGO related fields
+    ngoId: user.ngoId || null,
+    ngoRole: user.ngoRole || null,
+    // Include NGO details if provided
+    ngoStatus: ngoData?.isVerified ? "verified" : (ngoData ? "pending" : null),
+    ngoName: ngoData?.ngoName || null
 });
 
 const hashResetToken = (token) =>
@@ -174,8 +181,9 @@ export const registerUser = async (req, res) => {
 // Login user /api/login
 export const loginUser = async (req, res) => {
     try {
-        const { email, password } = req.body;
+        const { email, password, loginType } = req.body;
         const cleanEmail = normalizeEmail(email);
+        const isNgoLogin = loginType === "ngo";
 
         if (!cleanEmail || !password) {
             return res.status(400).json({
@@ -207,14 +215,46 @@ export const loginUser = async (req, res) => {
             });
         }
 
+        // For NGO login, validate NGO association
+        let ngoData = null;
+        if (isNgoLogin) {
+            if (!user.ngoId) {
+                // Check if user has an NGO by email (for cases where ngoId wasn't linked)
+                const ngoByEmail = await Ngo.findOne({ email: cleanEmail }).select("_id ngoName isVerified");
+                if (ngoByEmail) {
+                    // Link the NGO to user
+                    user.ngoId = ngoByEmail._id;
+                    user.ngoRole = "owner";
+                    await user.save();
+                    ngoData = ngoByEmail;
+                } else {
+                    return res.status(403).json({
+                        success: false,
+                        message: "No NGO registered with this account. Please register an NGO first.",
+                        code: "NO_NGO_FOUND"
+                    });
+                }
+            } else {
+                ngoData = await Ngo.findById(user.ngoId).select("_id ngoName isVerified");
+                if (!ngoData) {
+                    return res.status(403).json({
+                        success: false,
+                        message: "NGO not found. It may have been deleted.",
+                        code: "NGO_NOT_FOUND"
+                    });
+                }
+            }
+        }
+
         // Generate token and set cookie
         const token = generateToken(res, user._id);
 
         res.status(200).json({
             success: true,
-            message: "User logged in successfully",
+            message: isNgoLogin ? "NGO login successful" : "User logged in successfully",
             token,
-            data: toUserPayload(user)
+            data: toUserPayload(user, ngoData),
+            loginType: isNgoLogin ? "ngo" : "user"
         });
     } catch (error) {
         res.status(500).json({
@@ -889,6 +929,85 @@ export const logoutUser = async (req, res) => {
         res.status(500).json({
             success: false,
             message: "Error logging out user",
+            error: error.message
+        });
+    }
+}
+
+// Admin Login /api/admin/login
+export const adminLogin = async (req, res) => {
+    try {
+        const { email, password } = req.body;
+        const cleanEmail = normalizeEmail(email);
+
+        // Log admin login attempt (for security audit)
+        console.log(`[ADMIN LOGIN ATTEMPT] ${new Date().toISOString()} - Email: ${cleanEmail} - IP: ${req.ip || req.connection?.remoteAddress || 'unknown'}`);
+
+        if (!cleanEmail || !password) {
+            return res.status(400).json({
+                success: false,
+                message: "Email and password are required"
+            });
+        }
+
+        const user = await User.findOne({ email: cleanEmail });
+        
+        if (!user) {
+            console.log(`[ADMIN LOGIN FAILED] ${new Date().toISOString()} - Email: ${cleanEmail} - Reason: User not found`);
+            return res.status(401).json({
+                success: false,
+                message: "Invalid credentials"
+            });
+        }
+
+        // Check if user is an admin
+        if (user.role !== "admin") {
+            console.log(`[ADMIN LOGIN FAILED] ${new Date().toISOString()} - Email: ${cleanEmail} - Reason: Not an admin (role: ${user.role})`);
+            return res.status(403).json({
+                success: false,
+                message: "Access denied. Admin privileges required."
+            });
+        }
+
+        if (!user.password) {
+            console.log(`[ADMIN LOGIN FAILED] ${new Date().toISOString()} - Email: ${cleanEmail} - Reason: No password set`);
+            return res.status(401).json({
+                success: false,
+                message: "Invalid credentials"
+            });
+        }
+
+        const isPasswordValid = await bcrypt.compare(password, user.password);
+        if (!isPasswordValid) {
+            console.log(`[ADMIN LOGIN FAILED] ${new Date().toISOString()} - Email: ${cleanEmail} - Reason: Invalid password`);
+            return res.status(401).json({
+                success: false,
+                message: "Invalid credentials"
+            });
+        }
+
+        // Generate token and set cookie
+        const token = generateToken(res, user._id);
+
+        console.log(`[ADMIN LOGIN SUCCESS] ${new Date().toISOString()} - Email: ${cleanEmail} - User ID: ${user._id}`);
+
+        res.status(200).json({
+            success: true,
+            message: "Admin login successful",
+            token,
+            data: {
+                id: user._id,
+                name: user.name,
+                email: user.email,
+                role: user.role,
+                avatar: user.avatar || null
+            }
+        });
+    } catch (error) {
+        console.error(`[ADMIN LOGIN ERROR] ${new Date().toISOString()} - Error: ${error.message}`);
+        res.status(500).json({
+            success: false,
+            message: "Error during admin login",
             error: error.message
         });
     }

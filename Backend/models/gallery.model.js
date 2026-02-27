@@ -67,6 +67,25 @@ const gallerySchema = new mongoose.Schema({
   uploadedBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User"
+  },
+  
+  // --- NGO Gallery Support ---
+  ngoId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Ngo",
+    default: null  // null = platform gallery, ObjectId = NGO-specific gallery
+  },
+  
+  // Approval status for NGO uploads
+  approvalStatus: {
+    type: String,
+    enum: ["pending", "approved", "rejected"],
+    default: "approved"  // Platform uploads are auto-approved, NGO uploads start as pending
+  },
+  
+  rejectionReason: {
+    type: String,
+    default: ""
   }
 }, {
   timestamps: true
@@ -75,5 +94,6 @@ const gallerySchema = new mongoose.Schema({
 // Index for faster queries
 gallerySchema.index({ type: 1, isActive: 1, createdAt: -1 });
 gallerySchema.index({ category: 1 });
+gallerySchema.index({ ngoId: 1, approvalStatus: 1 });
 
 export default mongoose.model("Gallery", gallerySchema);

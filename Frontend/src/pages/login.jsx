@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { GoogleLogin } from "@react-oauth/google";
+import { User, Building2 } from "lucide-react";
 
 const API_BASE_URL = String(import.meta.env.VITE_API_BASE_URL || "http://localhost:5000").replace(/\/$/, "");
 const GOOGLE_CLIENT_ID = String(import.meta.env.VITE_GOOGLE_CLIENT_ID || "").trim();
@@ -10,10 +11,13 @@ function Login() {
   const location = useLocation();
   const [isLogin, setIsLogin] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
+  
+  // Derive loginType from URL path
+  const loginType = location.pathname === "/login/ngo" ? "ngo" : "user";
 
   const getRedirectPath = () => {
     const candidate = location.state?.redirectTo;
-    if (typeof candidate === "string" && candidate.startsWith("/") && candidate !== "/login") {
+    if (typeof candidate === "string" && candidate.startsWith("/") && !candidate.startsWith("/login")) {
       return candidate;
     }
     return "/";
@@ -85,7 +89,7 @@ function Login() {
     setShowForgotModal(false);
 
     if (new URLSearchParams(location.search).get("forgot") === "1") {
-      navigate("/login", { replace: true });
+      navigate(`/login/${loginType}`, { replace: true });
     }
   };
 
@@ -123,7 +127,7 @@ function Login() {
       setTimeout(() => {
         setShowForgotModal(false);
         if (new URLSearchParams(location.search).get("forgot") === "1") {
-          navigate("/login", { replace: true });
+          navigate(`/login/${loginType}`, { replace: true });
         }
       }, 1400);
     } catch (err) {
@@ -170,7 +174,7 @@ function Login() {
     setResetSuccess("");
 
     if (new URLSearchParams(location.search).get("resetToken")) {
-      navigate("/login", { replace: true });
+      navigate(`/login/${loginType}`, { replace: true });
     }
   };
 
@@ -300,7 +304,7 @@ function Login() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify(loginData),
+        body: JSON.stringify({ ...loginData, loginType }),
       });
 
       const data = await res.json();
@@ -308,16 +312,37 @@ function Login() {
       if (!res.ok) {
         throw new Error(data.message || "Login failed");
       }
-      sessionStorage.setItem(
-        "flash_message",
-        JSON.stringify({ type: "success", message: "Logged in successfully." })
-      );
+      
       if (data?.token) {
         localStorage.setItem("token", data.token);
       }
       localStorage.setItem("user", JSON.stringify(data.data));
       window.dispatchEvent(new Event("authChanged"));
-      navigate(getRedirectPath(), { replace: true });
+
+      // Handle redirect based on login type and user role
+      if (loginType === "ngo") {
+        sessionStorage.setItem(
+          "flash_message",
+          JSON.stringify({ type: "success", message: "Welcome to NGO Dashboard!" })
+        );
+        if (data.data.ngoStatus === "pending") {
+          navigate("/ngo/pending", { replace: true });
+        } else {
+          navigate("/ngo", { replace: true });
+        }
+      } else if (data.data.role === "admin") {
+        sessionStorage.setItem(
+          "flash_message",
+          JSON.stringify({ type: "success", message: "Welcome Admin!" })
+        );
+        navigate("/admin", { replace: true });
+      } else {
+        sessionStorage.setItem(
+          "flash_message",
+          JSON.stringify({ type: "success", message: "Logged in successfully." })
+        );
+        navigate(getRedirectPath(), { replace: true });
+      }
     } catch (err) {
       setError(err.message);
     } finally {
@@ -411,11 +436,41 @@ function Login() {
         {/* RIGHT SIDE - FORM */}
         <div style={styles.formSection}>
           <div style={styles.formContainer}>
+            {/* LOGIN TYPE TABS */}
+            {isLogin && (
+              <div style={styles.loginTypeTabs}>
+                <button
+                  type="button"
+                  onClick={() => navigate("/login/user")}
+                  style={loginType === "user" ? styles.activeTab : styles.inactiveTab}
+                >
+                  <User size={18} />
+                  <span>User Login</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => navigate("/login/ngo")}
+                  style={loginType === "ngo" ? styles.activeTab : styles.inactiveTab}
+                >
+                  <Building2 size={18} />
+                  <span>NGO Login</span>
+                </button>
+              </div>
+            )}
+
             <div style={styles.header}>
-              <h2 style={styles.title}>{isLogin ? "Welcome Back" : "Join the Movement"}</h2>
+              <h2 style={styles.title}>
+                {isLogin 
+                  ? (loginType === "ngo" ? "NGO Dashboard Access" : "Welcome Back")
+                  : "Join the Movement"
+                }
+              </h2>
               <p style={styles.subtitle}>
                 {isLogin
-                  ? "Enter your details to access your account."
+                  ? (loginType === "ngo" 
+                      ? "Access your NGO dashboard."
+                      : "Enter your details to access your account."
+                    )
                   : "Create an account to start volunteering today."}
               </p>
             </div>
@@ -423,7 +478,7 @@ function Login() {
             {/* ERROR ALERT */}
             {error && (
               <div style={styles.errorBox}>
-                <span style={styles.errorIcon}>⚠️</span> {error}
+                <span style={styles.errorIcon}>!</span> {error}
               </div>
             )}
 
@@ -508,7 +563,7 @@ function Login() {
               )}
 
               <button type="submit" style={loading ? styles.disabledBtn : styles.submitBtn} disabled={loading}>
-                {loading ? "Processing..." : isLogin ? "Sign In" : "Create Account"}
+                {loading ? "Processing..." : isLogin ? (loginType === "ngo" ? "Login as NGO" : "Sign In") : "Create Account"}
               </button>
             </form>
 
@@ -550,10 +605,30 @@ function Login() {
             )}
 
             <p style={styles.toggleText}>
-              {isLogin ? "Don't have an account? " : "Already have an account? "}
-              <span onClick={toggleMode} style={styles.toggleLink}>
-                {isLogin ? "Sign up" : "Log in"}
-              </span>
+              {isLogin ? (
+                loginType === "ngo" ? (
+                  <>
+                    Don't have an NGO registered?{" "}
+                    <span onClick={() => navigate("/add-ngo")} style={styles.toggleLink}>
+                      Register NGO
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    Don't have an account?{" "}
+                    <span onClick={toggleMode} style={styles.toggleLink}>
+                      Sign up
+                    </span>
+                  </>
+                )
+              ) : (
+                <>
+                  Already have an account?{" "}
+                  <span onClick={toggleMode} style={styles.toggleLink}>
+                    Log in
+                  </span>
+                </>
+              )}
             </p>
           </div>
         </div>
@@ -865,6 +940,63 @@ const styles = {
     gap: "8px",
     border: "1px solid #fecaca",
   },
+  errorIcon: {
+    width: "20px",
+    height: "20px",
+    borderRadius: "50%",
+    backgroundColor: "#b91c1c",
+    color: "#fff",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: "0.75rem",
+    fontWeight: "bold",
+    flexShrink: 0,
+  },
+  // LOGIN TYPE TABS
+  loginTypeTabs: {
+    display: "flex",
+    gap: "10px",
+    marginBottom: "20px",
+    padding: "4px",
+    backgroundColor: "#f3f4f6",
+    borderRadius: "12px",
+  },
+  loginTypeTab: {
+    flex: 1,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: "8px",
+    padding: "12px 16px",
+    border: "none",
+    borderRadius: "10px",
+    backgroundColor: "transparent",
+    color: "#6b7280",
+    fontSize: "0.95rem",
+    fontWeight: "500",
+    cursor: "pointer",
+    transition: "all 0.2s ease",
+    fontFamily: "inherit",
+  },
+  loginTypeTabActive: {
+    flex: 1,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: "8px",
+    padding: "12px 16px",
+    border: "none",
+    borderRadius: "10px",
+    backgroundColor: "#fff",
+    color: "#2e7d32",
+    fontSize: "0.95rem",
+    fontWeight: "600",
+    cursor: "pointer",
+    transition: "all 0.2s ease",
+    boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+    fontFamily: "inherit",
+  },
   link: {
     color: "#2e7d32",
     textDecoration: "none",
@@ -1006,6 +1138,43 @@ const styles = {
     fontWeight: "700",
     cursor: "pointer",
     marginLeft: "5px",
+  },
+  loginTypeTabs: {
+    display: "flex",
+    gap: "10px",
+    marginBottom: "25px",
+  },
+  activeTab: {
+    flex: 1,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: "8px",
+    padding: "12px 16px",
+    borderRadius: "10px",
+    border: "2px solid #2e7d32",
+    backgroundColor: "#f0fdf4",
+    color: "#2e7d32",
+    fontWeight: "600",
+    fontSize: "0.95rem",
+    cursor: "pointer",
+    transition: "all 0.2s",
+  },
+  inactiveTab: {
+    flex: 1,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: "8px",
+    padding: "12px 16px",
+    borderRadius: "10px",
+    border: "2px solid #e0e0e0",
+    backgroundColor: "#fff",
+    color: "#666",
+    fontWeight: "500",
+    fontSize: "0.95rem",
+    cursor: "pointer",
+    transition: "all 0.2s",
   },
 
 };

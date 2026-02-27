@@ -1,22 +1,26 @@
 import React, { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate, Outlet } from "react-router-dom";
+import { LayoutDashboard, Building2, Users, Mail, Image, UserCircle } from "lucide-react";
 import "./admin.css";
+// Removed remove-admin-padding.css import
 
 const API_BASE_URL = String(import.meta.env.VITE_API_BASE_URL || "http://localhost:5000").replace(/\/$/, "");
 
 const NAV_ITEMS = [
-  { path: "/admin", label: "Dashboard", icon: "📊", exact: true },
-  { path: "/admin/ngos", label: "NGOs", icon: "🏢" },
-  { path: "/admin/volunteers", label: "Volunteers", icon: "🤝" },
-  { path: "/admin/contacts", label: "Contacts", icon: "✉️" },
-  { path: "/admin/gallery", label: "Gallery", icon: "🖼️" },
-  { path: "/admin/users", label: "Users", icon: "👥" },
+  { path: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
+  { path: "/admin/ngos", label: "NGOs", icon: Building2 },
+  { path: "/admin/volunteers", label: "Volunteers", icon: Users },
+  { path: "/admin/contacts", label: "Contacts", icon: Mail },
+  { path: "/admin/gallery", label: "Gallery", icon: Image },
+  { path: "/admin/users", label: "Users", icon: UserCircle },
 ];
 
 function AdminLayout() {
   const location = useLocation();
   const navigate = useNavigate();
   const [pendingCounts, setPendingCounts] = useState({ ngos: 0, volunteers: 0, contacts: 0 });
+
+  // Removed body class toggling for admin dashboard to restore default spacing
 
   const user = (() => {
     try { return JSON.parse(localStorage.getItem("user")); } catch { return null; }
@@ -25,7 +29,7 @@ function AdminLayout() {
   useEffect(() => {
     if (!user || user.role !== "admin") {
       sessionStorage.setItem("flash_message", JSON.stringify({ type: "error", message: "Admin access required." }));
-      navigate("/login", { replace: true });
+      navigate("/login/admin", { replace: true });
       return;
     }
 
@@ -73,7 +77,7 @@ function AdminLayout() {
           {NAV_ITEMS.map((item) => (
             <li key={item.path}>
               <Link to={item.path} className={isActive(item) ? "active" : ""}>
-                <span className="nav-icon">{item.icon}</span>
+                <span className="nav-icon"><item.icon size={18} /></span>
                 <span className="nav-text">{item.label}</span>
                 {getBadge(item.label) && (
                   <span className="nav-badge">{getBadge(item.label)}</span>
@@ -82,6 +86,17 @@ function AdminLayout() {
             </li>
           ))}
         </ul>
+        <button
+          className="admin-logout-btn"
+          onClick={() => {
+            localStorage.removeItem("token");
+            localStorage.removeItem("user");
+            sessionStorage.clear();
+            navigate("/login/admin", { replace: true });
+          }}
+        >
+          Sign Out
+        </button>
       </aside>
 
       {/* Main Content */}

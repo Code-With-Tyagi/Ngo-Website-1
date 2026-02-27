@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
+import { Mail, Loader, Send } from "lucide-react";
 import { API_BASE_URL } from "./AdminLayout.jsx";
 import { useFlash } from "../../components/common/FlashMessage.jsx";
 
@@ -195,7 +196,7 @@ function AdminContacts() {
 
   return (
     <div>
-      <h1 className="admin-page-title">📧 Manage Contacts</h1>
+      <h1 className="admin-page-title"><Mail size={24} style={{ marginRight: 10, verticalAlign: 'middle' }} />Manage Contacts</h1>
 
       <div className="admin-filters" style={{ marginBottom: "20px", display: "flex", gap: "15px" }}>
         <input
@@ -506,9 +507,9 @@ function AdminContacts() {
                 }}
               >
                 {sendingReply ? (
-                  <>⏳ Sending...</>
+                  <><Loader size={16} style={{ marginRight: 6 }} className="spin" /> Sending...</>
                 ) : (
-                  <>🚀 Send Reply</>
+                  <><Send size={16} style={{ marginRight: 6 }} /> Send Reply</>
                 )}
               </button>
               <button

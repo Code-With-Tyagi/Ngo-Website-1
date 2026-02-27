@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
+import { Trash2 } from "lucide-react";
 import { API_BASE_URL } from "./AdminLayout.jsx";
 
 const STATUS_OPTIONS = ["Pending", "Approved", "Rejected"];
@@ -167,7 +168,7 @@ function AdminVolunteers() {
                           disabled={actionLoading === v._id}
                           onClick={() => deleteVolunteer(v._id, v.fullName)}
                         >
-                          🗑
+                          <Trash2 size={16} />
                         </button>
                       </div>
                     </td>

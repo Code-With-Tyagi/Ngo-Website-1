@@ -1,10 +1,18 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { 
-  Camera, Video, Upload, Trash2, Search, X, Plus, 
-  Image as ImageIcon, Youtube, CheckSquare, Square, AlertCircle 
+  Camera, Video, Trash2, Search, 
+  Image as ImageIcon, CheckSquare, Square, CheckCircle, XCircle, Clock, Building2
 } from "lucide-react";
 import { useFlash } from "../../components/common/FlashMessage.jsx";
 import { API_BASE_URL } from "./AdminLayout.jsx";
+
+// Helper to get proper image URL (handles both NGO and platform uploads)
+const getImageUrl = (url) => {
+  if (!url) return "https://via.placeholder.com/400x250?text=No+Image";
+  if (url.startsWith("http")) return url;
+  if (url.startsWith("/uploads/")) return `${API_BASE_URL}${url}`;
+  return `${API_BASE_URL}/uploads/gallery/${url}`;
+};
 
 const CATEGORIES = [
   "Food Distribution", "Medical Camps", "Education Programs", 
@@ -15,35 +23,25 @@ const AdminGallery = () => {
   // --- State Management ---
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [counts, setCounts] = useState({ images: 0, videos: 0 });
+  const [counts, setCounts] = useState({ images: 0, videos: 0, pending: 0 });
   const [activeTab, setActiveTab] = useState("all");
   const [category, setCategory] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
   const [search, setSearch] = useState("");
   const [pagination, setPagination] = useState({ page: 1, pages: 1, total: 0 });
   
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [addType, setAddType] = useState("image");
-  const [uploading, setUploading] = useState(false);
-  
-  const [formData, setFormData] = useState({ title: "", description: "", category: "Other", url: "" });
-  const [selectedFile, setSelectedFile] = useState(null);
-  const [previewUrl, setPreviewUrl] = useState(null);
-  const [thumbnailFile, setThumbnailFile] = useState(null);
-  const [thumbnailPreview, setThumbnailPreview] = useState(null);
-  
   const [selectedItems, setSelectedItems] = useState([]);
   const [bulkDeleting, setBulkDeleting] = useState(false);
+  const [actionLoading, setActionLoading] = useState(null);
 
   const token = localStorage.getItem("token");
   const flash = useFlash();
-  const fileInputRef = useRef(null);
-  const thumbnailInputRef = useRef(null);
 
   // --- Effects & Fetching ---
   useEffect(() => {
     fetchGalleryItems();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTab, category, search]);
+  }, [activeTab, category, statusFilter, search]);
 
   const fetchGalleryItems = async (page = 1) => {
     setLoading(true);
@@ -51,6 +49,7 @@ const AdminGallery = () => {
       const params = new URLSearchParams();
       if (activeTab !== "all") params.set("type", activeTab);
       if (category !== "all") params.set("category", category);
+      if (statusFilter !== "all") params.set("status", statusFilter);
       if (search) params.set("search", search);
       params.set("page", page);
       params.set("limit", 20);
@@ -73,77 +72,48 @@ const AdminGallery = () => {
     }
   };
 
-  // --- Handlers ---
-  const handleFileSelect = (e, isThumbnail = false) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    const allowedTypes = ["image/jpeg", "image/jpg", "image/png", "image/gif", "image/webp"];
-    if (!allowedTypes.includes(file.type)) {
-      return flash.error("Only JPEG, PNG, GIF, and WebP images are allowed");
-    }
-    if (file.size > 10 * 1024 * 1024) {
-      return flash.error("File size must be less than 10MB");
-    }
-    
-    const preview = URL.createObjectURL(file);
-    if (isThumbnail) {
-      setThumbnailFile(file);
-      setThumbnailPreview(preview);
-    } else {
-      setSelectedFile(file);
-      setPreviewUrl(preview);
+  // --- Approve/Reject Handlers ---
+  const handleApprove = async (id) => {
+    setActionLoading(id);
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/gallery/admin/${id}/approve`, {
+        method: "PUT",
+        headers: { Authorization: `Bearer ${token}` },
+        credentials: "include"
+      });
+      const data = await res.json();
+      if (data.success) {
+        flash.success("Item approved successfully");
+        fetchGalleryItems(pagination.page);
+      } else {
+        flash.error(data.message || "Failed to approve");
+      }
+    } catch (error) {
+      flash.error("Failed to approve item");
+    } finally {
+      setActionLoading(null);
     }
   };
 
-  const handleAddMedia = async () => {
-    if (!formData.title.trim()) return flash.error("Please enter a title");
-
-    const isVideo = addType === "video";
-    if (isVideo && !formData.url.trim()) return flash.error("Please enter a video URL");
-    if (!isVideo && !selectedFile) return flash.error("Please select an image");
-
-    if (isVideo) {
-      const url = formData.url.trim();
-      if (!url.includes("youtube.com") && !url.includes("youtu.be") && !url.includes("vimeo.com")) {
-        return flash.error("Only YouTube and Vimeo URLs are supported");
-      }
-    }
-
-    setUploading(true);
+  const handleReject = async (id) => {
+    setActionLoading(id);
     try {
-      const data = new FormData();
-      data.append("title", formData.title.trim());
-      data.append("description", formData.description.trim());
-      data.append("category", formData.category);
-      
-      if (isVideo) {
-        data.append("url", formData.url.trim());
-        if (thumbnailFile) data.append("thumbnail", thumbnailFile);
-      } else {
-        data.append("image", selectedFile);
-      }
-
-      const endpoint = isVideo ? "/api/gallery/admin/video" : "/api/gallery/admin/image";
-      const res = await fetch(`${API_BASE_URL}${endpoint}`, {
-        method: "POST",
+      const res = await fetch(`${API_BASE_URL}/api/gallery/admin/${id}/reject`, {
+        method: "PUT",
         headers: { Authorization: `Bearer ${token}` },
-        credentials: "include",
-        body: data
+        credentials: "include"
       });
-      
-      const result = await res.json();
-      if (result.success) {
-        flash.success(`${isVideo ? 'Video' : 'Image'} added successfully!`);
-        closeAddModal();
-        fetchGalleryItems();
+      const data = await res.json();
+      if (data.success) {
+        flash.success("Item rejected");
+        fetchGalleryItems(pagination.page);
       } else {
-        flash.error(result.message || "Upload failed");
+        flash.error(data.message || "Failed to reject");
       }
     } catch (error) {
-      flash.error("An error occurred during upload");
+      flash.error("Failed to reject item");
     } finally {
-      setUploading(false);
+      setActionLoading(null);
     }
   };
 
@@ -202,17 +172,14 @@ const AdminGallery = () => {
     setSelectedItems(selectedItems.length === items.length ? [] : items.map(i => i._id));
   };
 
-  const openAddModal = (type) => {
-    setAddType(type);
-    setFormData({ title: "", description: "", category: "Other", url: "" });
-    setSelectedFile(null);
-    setPreviewUrl(null);
-    setThumbnailFile(null);
-    setThumbnailPreview(null);
-    setShowAddModal(true);
+  const getStatusBadge = (status) => {
+    const badges = {
+      pending: { bg: "#fef3c7", color: "#92400e", icon: Clock, text: "Pending" },
+      approved: { bg: "#d1fae5", color: "#065f46", icon: CheckCircle, text: "Approved" },
+      rejected: { bg: "#fee2e2", color: "#991b1b", icon: XCircle, text: "Rejected" }
+    };
+    return badges[status] || badges.pending;
   };
-
-  const closeAddModal = () => setShowAddModal(false);
 
   // --- UI Components ---
   return (
@@ -222,20 +189,12 @@ const AdminGallery = () => {
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "32px", flexWrap: "wrap", gap: "16px" }}>
         <div>
           <h1 style={{ fontSize: "28px", fontWeight: "700", margin: "0 0 8px 0", color: "#0f172a" }}>Media Gallery</h1>
-          <p style={{ margin: 0, color: "#64748b", fontSize: "15px" }}>Manage your organization's photos and videos.</p>
-        </div>
-        <div style={{ display: "flex", gap: "12px" }}>
-          <button onClick={() => openAddModal("image")} style={styles.primaryBtn}>
-            <Camera size={18} /> Upload Image
-          </button>
-          <button onClick={() => openAddModal("video")} style={styles.secondaryBtn}>
-            <Youtube size={18} /> Add Video
-          </button>
+          <p style={{ margin: 0, color: "#64748b", fontSize: "15px" }}>Review and manage NGO uploaded media content.</p>
         </div>
       </div>
 
       {/* Stats Cards */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: "20px", marginBottom: "32px" }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "20px", marginBottom: "32px" }}>
         <div style={styles.statCard}>
           <div style={{...styles.iconWrapper, background: "#ecfdf5", color: "#10b981"}}>
             <Camera size={24} />
@@ -252,6 +211,15 @@ const AdminGallery = () => {
           <div>
             <div style={{ fontSize: "24px", fontWeight: "700", color: "#0f172a" }}>{counts.videos}</div>
             <div style={{ color: "#64748b", fontSize: "14px", fontWeight: "500" }}>Total Videos</div>
+          </div>
+        </div>
+        <div style={styles.statCard}>
+          <div style={{...styles.iconWrapper, background: "#fef3c7", color: "#f59e0b"}}>
+            <Clock size={24} />
+          </div>
+          <div>
+            <div style={{ fontSize: "24px", fontWeight: "700", color: "#0f172a" }}>{counts.pending || 0}</div>
+            <div style={{ color: "#64748b", fontSize: "14px", fontWeight: "500" }}>Pending Review</div>
           </div>
         </div>
       </div>
@@ -273,6 +241,13 @@ const AdminGallery = () => {
         <select value={category} onChange={(e) => setCategory(e.target.value)} style={styles.input}>
           <option value="all">All Categories</option>
           {CATEGORIES.map(cat => <option key={cat} value={cat}>{cat}</option>)}
+        </select>
+
+        <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} style={styles.input}>
+          <option value="all">All Status</option>
+          <option value="pending">Pending</option>
+          <option value="approved">Approved</option>
+          <option value="rejected">Rejected</option>
         </select>
 
         <div style={{ position: "relative", flex: 1, minWidth: "220px" }}>
@@ -313,7 +288,7 @@ const AdminGallery = () => {
             <ImageIcon size={32} />
           </div>
           <h3 style={{ margin: "0 0 8px 0", color: "#0f172a" }}>No media found</h3>
-          <p style={{ margin: 0, color: "#64748b" }}>Upload images or videos to build your gallery.</p>
+          <p style={{ margin: 0, color: "#64748b" }}>No gallery items match your filters.</p>
         </div>
       ) : (
         <div style={styles.grid}>
@@ -322,11 +297,12 @@ const AdminGallery = () => {
               
               <div style={{ position: "relative", aspectRatio: "16/10", cursor: "pointer", overflow: "hidden" }} onClick={() => toggleSelectItem(item._id)}>
                 <img
-                  src={item.type === "image" ? `${API_BASE_URL}${item.url}` : (item.thumbnail ? (item.thumbnail.startsWith("http") ? item.thumbnail : `${API_BASE_URL}${item.thumbnail}`) : "https://via.placeholder.com/400x250?text=Video")}
+                  src={item.type === "image" ? getImageUrl(item.url) : (item.thumbnail ? getImageUrl(item.thumbnail) : "https://via.placeholder.com/400x250?text=Video")}
                   alt={item.title}
                   style={{ width: "100%", height: "100%", objectFit: "cover", transition: "transform 0.3s ease" }}
                   onMouseOver={e => e.currentTarget.style.transform = "scale(1.05)"}
                   onMouseOut={e => e.currentTarget.style.transform = "scale(1)"}
+                  onError={e => { e.currentTarget.src = "https://via.placeholder.com/400x250?text=Image+Not+Found"; }}
                 />
                 
                 <div style={styles.badge(item.type === "image" ? "#10b981" : "#ef4444")}>
@@ -340,16 +316,63 @@ const AdminGallery = () => {
               </div>
 
               <div style={{ padding: "16px" }}>
-                <h4 style={{ margin: "0 0 12px", fontSize: "15px", fontWeight: "600", color: "#0f172a", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                  {item.title}
-                </h4>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "8px" }}>
+                  <h4 style={{ margin: 0, fontSize: "15px", fontWeight: "600", color: "#0f172a", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", flex: 1 }}>
+                    {item.title}
+                  </h4>
+                  {(() => {
+                    const badge = getStatusBadge(item.status);
+                    const Icon = badge.icon;
+                    return (
+                      <span style={{ background: badge.bg, color: badge.color, padding: "4px 8px", borderRadius: "6px", fontSize: "11px", fontWeight: "600", display: "flex", alignItems: "center", gap: "4px", marginLeft: "8px" }}>
+                        <Icon size={12} /> {badge.text}
+                      </span>
+                    );
+                  })()}
+                </div>
                 
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
                   <span style={styles.categoryPill}>{item.category}</span>
                   <span style={{ fontSize: "12px", color: "#94a3b8" }}>
                     {new Date(item.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
                   </span>
                 </div>
+
+                {/* NGO Info */}
+                {item.ngoId && (
+                  <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "12px", padding: "8px 10px", background: "#f0f9ff", borderRadius: "6px", border: "1px solid #bae6fd" }}>
+                    <Building2 size={14} style={{ color: "#0284c7" }} />
+                    <span style={{ fontSize: "12px", fontWeight: "500", color: "#0369a1" }}>
+                      {item.ngoId.ngoName || "Unknown NGO"}
+                    </span>
+                  </div>
+                )}
+
+                {!item.ngoId && (
+                  <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "12px", padding: "8px 10px", background: "#f1f5f9", borderRadius: "6px" }}>
+                    <span style={{ fontSize: "12px", fontWeight: "500", color: "#64748b" }}>Platform Upload</span>
+                  </div>
+                )}
+
+                {/* Action Buttons */}
+                {item.status === "pending" && (
+                  <div style={{ display: "flex", gap: "8px", marginBottom: "12px" }}>
+                    <button 
+                      onClick={() => handleApprove(item._id)} 
+                      disabled={actionLoading === item._id}
+                      style={{ flex: 1, padding: "8px", background: "#10b981", color: "white", border: "none", borderRadius: "6px", cursor: "pointer", fontWeight: "600", fontSize: "13px", display: "flex", alignItems: "center", justifyContent: "center", gap: "6px" }}
+                    >
+                      <CheckCircle size={14} /> Approve
+                    </button>
+                    <button 
+                      onClick={() => handleReject(item._id)} 
+                      disabled={actionLoading === item._id}
+                      style={{ flex: 1, padding: "8px", background: "#fff", color: "#ef4444", border: "1px solid #fca5a5", borderRadius: "6px", cursor: "pointer", fontWeight: "600", fontSize: "13px", display: "flex", alignItems: "center", justifyContent: "center", gap: "6px" }}
+                    >
+                      <XCircle size={14} /> Reject
+                    </button>
+                  </div>
+                )}
 
                 <button onClick={() => handleDeleteItem(item._id, item.type)} style={styles.deleteBtn}>
                   <Trash2 size={16} /> Delete Media
@@ -382,107 +405,12 @@ const AdminGallery = () => {
           </button>
         </div>
       )}
-
-      {/* Modal Overlay */}
-      {showAddModal && (
-        <div style={styles.modalOverlay}>
-          <div style={styles.modalContent}>
-            <div style={styles.modalHeader}>
-              <h2 style={{ margin: 0, fontSize: "20px", display: "flex", alignItems: "center", gap: "10px", color: "#0f172a" }}>
-                {addType === "image" ? <Camera size={22} color="#10b981" /> : <Youtube size={22} color="#ef4444" />}
-                Add New {addType === "image" ? "Image" : "Video"}
-              </h2>
-              <button onClick={closeAddModal} style={styles.iconBtn}><X size={20} /></button>
-            </div>
-
-            <div style={{ padding: "24px" }}>
-              
-              {/* Media Upload Area */}
-              <div style={{ marginBottom: "24px" }}>
-                <label style={styles.label}>Media Source <span style={{color: "#ef4444"}}>*</span></label>
-                
-                {addType === "image" ? (
-                  <div 
-                    onClick={() => fileInputRef.current.click()} 
-                    style={{...styles.uploadBox, borderColor: previewUrl ? "#10b981" : "#cbd5e1"}}
-                  >
-                    <input ref={fileInputRef} type="file" accept="image/*" onChange={(e) => handleFileSelect(e, false)} style={{ display: "none" }} />
-                    {previewUrl ? (
-                      <img src={previewUrl} alt="Preview" style={{ maxHeight: "200px", borderRadius: "6px" }} />
-                    ) : (
-                      <div style={{ color: "#64748b" }}>
-                        <Upload size={32} style={{ margin: "0 auto 12px", color: "#94a3b8" }} />
-                        <p style={{ margin: "0 0 4px", fontWeight: "500", color: "#0f172a" }}>Click to browse or drag file</p>
-                        <p style={{ margin: 0, fontSize: "13px" }}>JPEG, PNG, WEBP up to 10MB</p>
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <div>
-                    <input
-                      type="url"
-                      placeholder="https://youtube.com/watch?v=..."
-                      value={formData.url}
-                      onChange={(e) => setFormData({ ...formData, url: e.target.value })}
-                      style={{...styles.input, width: "100%", boxSizing: "border-box", marginBottom: "16px"}}
-                    />
-                    <label style={styles.label}>Custom Thumbnail (Optional)</label>
-                    <div onClick={() => thumbnailInputRef.current.click()} style={styles.uploadBox}>
-                      <input ref={thumbnailInputRef} type="file" accept="image/*" onChange={(e) => handleFileSelect(e, true)} style={{ display: "none" }} />
-                      {thumbnailPreview ? (
-                        <div style={{ position: "relative" }}>
-                          <img src={thumbnailPreview} alt="Thumbnail" style={{ maxHeight: "120px", borderRadius: "6px" }} />
-                          <button onClick={(e) => { e.stopPropagation(); setThumbnailFile(null); setThumbnailPreview(null); }} style={styles.removePreviewBtn}>
-                            <X size={14} />
-                          </button>
-                        </div>
-                      ) : (
-                        <p style={{ margin: 0, color: "#64748b", fontSize: "14px" }}>Click to upload a custom thumbnail</p>
-                      )}
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Form Fields */}
-              <div style={{ marginBottom: "20px" }}>
-                <label style={styles.label}>Title <span style={{color: "#ef4444"}}>*</span></label>
-                <input type="text" placeholder="Enter media title" value={formData.title} onChange={(e) => setFormData({ ...formData, title: e.target.value })} style={{...styles.input, width: "100%", boxSizing: "border-box"}} />
-              </div>
-
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", marginBottom: "24px" }}>
-                <div style={{ gridColumn: "1 / -1" }}>
-                  <label style={styles.label}>Category</label>
-                  <select value={formData.category} onChange={(e) => setFormData({ ...formData, category: e.target.value })} style={{...styles.input, width: "100%", boxSizing: "border-box"}}>
-                    {CATEGORIES.map(cat => <option key={cat} value={cat}>{cat}</option>)}
-                  </select>
-                </div>
-                <div style={{ gridColumn: "1 / -1" }}>
-                  <label style={styles.label}>Description (Optional)</label>
-                  <textarea placeholder="Brief context about this media..." value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} rows={3} style={{...styles.input, width: "100%", boxSizing: "border-box", resize: "vertical"}} />
-                </div>
-              </div>
-
-              {/* Modal Actions */}
-              <div style={{ display: "flex", gap: "12px", justifyContent: "flex-end", borderTop: "1px solid #e2e8f0", paddingTop: "20px" }}>
-                <button onClick={closeAddModal} style={styles.cancelBtn}>Cancel</button>
-                <button onClick={handleAddMedia} disabled={uploading} style={uploading ? styles.disabledBtn : styles.submitBtn}>
-                  {uploading ? "Saving..." : "Save Media"}
-                </button>
-              </div>
-
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
 
 // --- Unified Styles Object ---
 const styles = {
-  primaryBtn: { display: "flex", alignItems: "center", gap: "8px", padding: "10px 18px", background: "#0f172a", color: "white", border: "none", borderRadius: "8px", cursor: "pointer", fontWeight: "500", fontSize: "14px", transition: "background 0.2s" },
-  secondaryBtn: { display: "flex", alignItems: "center", gap: "8px", padding: "10px 18px", background: "white", color: "#0f172a", border: "1px solid #e2e8f0", borderRadius: "8px", cursor: "pointer", fontWeight: "500", fontSize: "14px", boxShadow: "0 1px 2px rgba(0,0,0,0.05)" },
   dangerBtn: { display: "flex", alignItems: "center", gap: "8px", padding: "10px 18px", background: "#fef2f2", color: "#ef4444", border: "1px solid #fca5a5", borderRadius: "8px", cursor: "pointer", fontWeight: "500", fontSize: "14px", marginLeft: "auto" },
   textBtn: { display: "flex", alignItems: "center", gap: "8px", background: "none", border: "none", cursor: "pointer", padding: "4px", color: "#334155", fontSize: "14px" },
   
@@ -503,17 +431,6 @@ const styles = {
   deleteBtn: { width: "100%", padding: "10px", background: "transparent", color: "#ef4444", border: "1px solid #fecaca", borderRadius: "8px", cursor: "pointer", fontWeight: "600", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", transition: "background 0.2s" },
   
   emptyState: { textAlign: "center", padding: "64px 20px", background: "white", borderRadius: "12px", border: "1px dashed #cbd5e1" },
-  
-  modalOverlay: { position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(15, 23, 42, 0.4)", backdropFilter: "blur(4px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: "20px" },
-  modalContent: { background: "white", borderRadius: "16px", width: "100%", maxWidth: "540px", maxHeight: "90vh", overflow: "auto", boxShadow: "0 20px 25px -5px rgba(0,0,0,0.1)" },
-  modalHeader: { padding: "20px 24px", borderBottom: "1px solid #e2e8f0", display: "flex", justifyContent: "space-between", alignItems: "center" },
-  iconBtn: { background: "none", border: "none", cursor: "pointer", color: "#94a3b8", padding: "4px", display: "flex" },
-  uploadBox: { border: "2px dashed", borderRadius: "12px", padding: "32px 20px", textAlign: "center", cursor: "pointer", background: "#f8fafc", transition: "all 0.2s ease", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: "160px" },
-  removePreviewBtn: { position: "absolute", top: "-10px", right: "-10px", background: "#ef4444", color: "white", border: "none", borderRadius: "50%", width: "24px", height: "24px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" },
-  
-  submitBtn: { padding: "10px 20px", background: "#0f172a", color: "white", border: "none", borderRadius: "8px", cursor: "pointer", fontWeight: "600", fontSize: "14px" },
-  disabledBtn: { padding: "10px 20px", background: "#94a3b8", color: "white", border: "none", borderRadius: "8px", cursor: "not-allowed", fontWeight: "600", fontSize: "14px" },
-  cancelBtn: { padding: "10px 20px", background: "transparent", color: "#475569", border: "1px solid #cbd5e1", borderRadius: "8px", cursor: "pointer", fontWeight: "600", fontSize: "14px" },
 
   paginationBtn: { padding: "8px 16px", background: "white", color: "#0f172a", border: "1px solid #cbd5e1", borderRadius: "6px", cursor: "pointer", fontWeight: "500", fontSize: "14px", boxShadow: "0 1px 2px rgba(0,0,0,0.05)" },
   paginationDisabled: { padding: "8px 16px", background: "#f1f5f9", color: "#94a3b8", border: "1px solid #e2e8f0", borderRadius: "6px", cursor: "not-allowed", fontWeight: "500", fontSize: "14px" }
