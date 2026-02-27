@@ -10,10 +10,10 @@ import {
 const router = express.Router();
 
 // Public endpoint to create an order (optionally authenticated)
-router.post("/order", verifyToken, createOrder);
+router.post("/order", createOrder);
 
 // Verify payment (client posts razorpay ids after payment)
-router.post("/verify", verifyToken, verifyPayment);
+router.post("/verify", verifyPayment);
 
 // Webhook endpoint from Razorpay (no auth)
 router.post("/webhook", express.raw({ type: "application/json" }), webhook);

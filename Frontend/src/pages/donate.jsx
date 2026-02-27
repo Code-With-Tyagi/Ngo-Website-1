@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { FaCheckCircle, FaLock } from "react-icons/fa";
 import cowImage from "../assets/images/elderly/elder.png";
@@ -45,9 +46,18 @@ const Donate = () => {
     }
   };
 
-  const handleProceedPayment = (e) => {
+  // Razorpay script loader
+  useEffect(() => {
+    if (!window.Razorpay) {
+      const script = document.createElement("script");
+      script.src = "https://checkout.razorpay.com/v1/checkout.js";
+      script.async = true;
+      document.body.appendChild(script);
+    }
+  }, []);
+
+  const handleProceedPayment = async (e) => {
     e.preventDefault();
-    // Validate minimum donation amount
     if (customAmount && parseInt(customAmount) < 300) {
       alert("Minimum donation amount is ₹300");
       return;
@@ -60,9 +70,94 @@ const Donate = () => {
       alert("Please enter your name or make it anonymous");
       return;
     }
-    alert(
-      `Processing donation of ₹${totalAmount} for Guardian of Angels`
-    );
+
+    // 1. Create order on backend
+    let orderData;
+    try {
+
+      console.log(totalAmount, donorName, isAnonymous, mobile, email, address, pincode, panNumber, wantsNotification, wantsTaxCertificate, citizenConfirmed, serviceTitle, tipAmount, donationAmount);
+      const res = await fetch("/api/payments/order", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          amount: totalAmount,
+          currency:"INR",
+          notes: {
+            donorName: donorName || "Anonymous",
+            isAnonymous,
+            mobile,
+            email,
+            address,
+            pincode,
+            panNumber,
+            wantsNotification,
+            wantsTaxCertificate,
+            citizenConfirmed,
+            serviceTitle,
+            tipAmount,
+            donationAmount
+          },
+          receipt: `donation_${Date.now()}_${Math.floor(Math.random() * 1000)}` // Unique receipt id
+        })
+      });
+      console.log("Order creation response:", res);
+      try {
+       const data = await res.json();
+       console.log("Order creation data:", data);
+      } catch (jsonErr) {
+        throw new Error("Invalid server response. Please try again later.");
+      }
+      if (!res.ok) throw new Error(data.message || "Failed to create order");
+      orderData = data.data.order;
+    } catch (err) {
+      alert("Failed to initiate payment: " + err.message);
+      return;
+    }
+
+    // 2. Open Razorpay checkout
+    const options = {
+      key: import.meta.env.VITE_RAZORPAY_KEY_ID || window.RAZORPAY_KEY_ID || "",
+      amount: orderData.amount,
+      currency: orderData.currency,
+      name: "SevaIndia",
+      description: serviceTitle,
+      image: serviceImage,
+      order_id: orderData.id,
+      handler: async function (response) {
+        // 3. Verify payment on backend
+        try {
+          const verifyRes = await fetch("/api/payments/verify", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify({
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature
+            })
+          });
+          const verifyData = await verifyRes.json();
+          if (!verifyRes.ok) throw new Error(verifyData.message || "Payment verification failed");
+          alert("Thank you for your donation! Payment successful.");
+        } catch (err) {
+          alert("Payment verification failed: " + err.message);
+        }
+      },
+      prefill: {
+        name: donorName,
+        email,
+        contact: mobile
+      },
+      notes: orderData.notes,
+      theme: { color: "#ff4757" }
+    };
+    if (window.Razorpay) {
+      const rzp = new window.Razorpay(options);
+      rzp.open();
+    } else {
+      alert("Razorpay SDK not loaded. Please try again.");
+    }
   };
 
   return (
