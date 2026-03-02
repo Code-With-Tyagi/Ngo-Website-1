@@ -7,12 +7,15 @@ import ApiError from "../utils/ApiError.js";
 import ApiResponse from "../utils/Apiresponse.js";
 
 export const generateUploadUrl = async (req, res) => {
-  const { fileType } = req.body;
+  const { fileType, fileName } = req.body;
   if (!fileType) {
     throw new ApiError(400, "fileType is required");
   }
+  if (!fileName) {
+    throw new ApiError(400, "fileName is required");
+  }
 
-  const key = `uploads/${uuid()}`;
+  const key = `Uploads/${fileName}.${fileType.split("/")[1]}`;
   const command = new PutObjectCommand({
     Bucket: process.env.BUCKET_NAME,
     Key: key,
