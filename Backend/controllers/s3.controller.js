@@ -1,13 +1,12 @@
 // controllers/s3.controller.js
 import { PutObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
-import { v4 as uuid } from "uuid";
 import { s3 } from "../config/s3Client.config.js";
 import ApiError from "../utils/ApiError.js";
 import ApiResponse from "../utils/Apiresponse.js";
 
 export const generateUploadUrl = async (req, res) => {
-  const { fileType, fileName } = req.body;
+  const { fileType, fileName,location } = req.body;
   if (!fileType) {
     throw new ApiError(400, "fileType is required");
   }
@@ -15,7 +14,7 @@ export const generateUploadUrl = async (req, res) => {
     throw new ApiError(400, "fileName is required");
   }
 
-  const key = `Uploads/${fileName}.${fileType.split("/")[1]}`;
+  const key = `Uploads/${location}/${fileName}.${fileType.split("/")[1]}`;
   const command = new PutObjectCommand({
     Bucket: process.env.BUCKET_NAME,
     Key: key,
