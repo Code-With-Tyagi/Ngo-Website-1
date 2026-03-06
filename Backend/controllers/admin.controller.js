@@ -2,7 +2,10 @@ import User from "../models/user.model.js";
 import Ngo from "../models/ngo.model.js";
 import Volunteer from "../models/volunteer.model.js";
 import Contact from "../models/contact.model.js";
+import FundRequest from "../models/fundRequest.model.js";
 import asyncHandler from "../utils/asyncHandler.js";
+import ApiError from "../utils/ApiError.js";
+import ApiResponse from "../utils/ApiResponse.js";
 
 // ─── Dashboard Stats ───
 export const getDashboardStats = asyncHandler(async (req, res) => {
@@ -327,4 +330,91 @@ export const getAllUsers = asyncHandler(async (req, res) => {
                 totalPages: Math.ceil(total / Number(limit))
             }
         });
+});
+// ─── Fund Request Management ───
+
+// Admin: View all NGO fund requests with filters and pagination
+export const getAllFundRequests = asyncHandler(async (req, res) => {
+    const { status, search, page = 1, limit = 20 } = req.query;
+    const filter = {};
+
+    if (status && ["Pending", "Approved", "Released", "Rejected"].includes(status)) {
+        filter.status = status;
+    }
+
+    if (search) {
+        filter.$or = [
+            { ngoName: { $regex: search, $options: "i" } },
+            { purpose: { $regex: search, $options: "i" } }
+        ];
+    }
+
+    const skip = (Number(page) - 1) * Number(limit);
+    const [requests, total] = await Promise.all([
+        FundRequest.find(filter)
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(Number(limit))
+            .populate("ngoId", "ngoName email city state")
+            .lean(),
+        FundRequest.countDocuments(filter)
+    ]);
+
+    return res.status(200).json(
+        new ApiResponse(200, "Fund requests fetched successfully", {
+            requests,
+            pagination: {
+                total,
+                page: Number(page),
+                limit: Number(limit),
+                totalPages: Math.ceil(total / Number(limit))
+            }
+        })
+    );
+});
+
+// Admin: Approve, Reject, or Release funds for a specific request
+export const updateFundRequestStatus = asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const { status, adminNote } = req.body;
+
+    const VALID_STATUSES = ["Approved", "Released", "Rejected"];
+    if (!status || !VALID_STATUSES.includes(status)) {
+        throw new ApiError(400, `Status must be one of: ${VALID_STATUSES.join(", ")}`);
+    }
+
+    const fundRequest = await FundRequest.findById(id);
+    if (!fundRequest) {
+        throw new ApiError(404, "Fund request not found");
+    }
+
+    // Guard invalid transitions
+    if (fundRequest.status === "Rejected") {
+        throw new ApiError(400, "Cannot update a rejected fund request");
+    }
+    if (fundRequest.status === "Released") {
+        throw new ApiError(400, "Funds have already been released for this request");
+    }
+    if (status === "Released" && fundRequest.status !== "Approved") {
+        throw new ApiError(400, "Funds can only be released after the request is approved");
+    }
+
+    fundRequest.status = status;
+    fundRequest.adminNote = adminNote?.trim() || fundRequest.adminNote;
+
+    if (status === "Released") {
+        fundRequest.releasedAt = new Date();
+    }
+
+    await fundRequest.save();
+
+    const messages = {
+        Approved: "Fund request approved successfully",
+        Released: "Funds released successfully. The NGO can now resolve the ticket.",
+        Rejected: "Fund request rejected"
+    };
+
+    return res.status(200).json(
+        new ApiResponse(200, messages[status], fundRequest)
+    );
 });

@@ -32,7 +32,7 @@ export const generateUploadUrl = async (req, res) => {
 };
 
 // generate a signed URL for downloading a file given its key
-export const generateDownloadUrl = async (req, res) => {
+export const getUrl = async (req, res) => {
   // key can come from body or query parameters
   const { key } = req.body || req.query;
   if (!key) {
@@ -44,11 +44,11 @@ export const generateDownloadUrl = async (req, res) => {
     Key: key,
   });
 
-  const downloadUrl = await getSignedUrl(s3, command, {
+  const Url = await getSignedUrl(s3, command, {
     expiresIn: 60000, // 60 sec
   });
 
-  res.json(new ApiResponse(200, "Download URL generated", { downloadUrl }));
+  res.json(new ApiResponse(200, "Download URL generated", { Url }));
 };
 
 // return a public URL for the object (assumes bucket or object is public-read)

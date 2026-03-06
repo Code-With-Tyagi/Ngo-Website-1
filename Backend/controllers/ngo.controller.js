@@ -1,4 +1,8 @@
 import Ngo from "../models/ngo.model.js";
+import FundRequest from "../models/fundRequest.model.js";
+import ApiResponse from "../utils/ApiResponse.js";
+import ApiError from "../utils/ApiError.js";
+import asyncHandler from "../utils/asyncHandler.js";
 
 const toBool = (value) => value === true || value === "true" || value === "on";
 
@@ -228,3 +232,89 @@ export const createNgo = async (req, res) => {
     });
   }
 };
+
+// ─── Fund Request: NGO submits a fund request ───
+export const requestNgoFunds = asyncHandler(async (req, res) => {
+    const ngo = req.ngo;
+
+    const { amount, purpose, description } = req.body;
+
+    if (!amount || isNaN(amount) || Number(amount) <= 0) {
+        throw new ApiError(400, "A valid amount greater than 0 is required");
+    }
+
+    if (!purpose || purpose.trim().length === 0) {
+        throw new ApiError(400, "Purpose is required");
+    }
+
+    const fundRequest = await FundRequest.create({
+        ngoId: ngo._id,
+        ngoName: ngo.ngoName,
+        amount: Number(amount),
+        purpose: purpose.trim(),
+        description: description?.trim() || ""
+    });
+
+    return res.status(201).json(
+        new ApiResponse(201, "Fund request submitted successfully", fundRequest)
+    );
+});
+
+// ─── Fund Request: NGO views their own fund requests ───
+export const getMyFundRequests = asyncHandler(async (req, res) => {
+    const ngo = req.ngo;
+    const { status, page = 1, limit = 10 } = req.query;
+
+    const filter = { ngoId: ngo._id };
+    if (status && ["Pending", "Approved", "Released", "Rejected"].includes(status)) {
+        filter.status = status;
+    }
+
+    const skip = (Number(page) - 1) * Number(limit);
+    const [requests, total] = await Promise.all([
+        FundRequest.find(filter).sort({ createdAt: -1 }).skip(skip).limit(Number(limit)).lean(),
+        FundRequest.countDocuments(filter)
+    ]);
+
+    return res.status(200).json(
+        new ApiResponse(200, "Fund requests fetched successfully", {
+            requests,
+            pagination: {
+                total,
+                page: Number(page),
+                limit: Number(limit),
+                totalPages: Math.ceil(total / Number(limit))
+            }
+        })
+    );
+});
+
+// ─── Fund Request: NGO resolves/acknowledges the ticket after funds are received ───
+export const resolveFundTicket = asyncHandler(async (req, res) => {
+    const ngo = req.ngo;
+    const { id } = req.params;
+
+    const fundRequest = await FundRequest.findOne({ _id: id, ngoId: ngo._id });
+
+    if (!fundRequest) {
+        throw new ApiError(404, "Fund request not found");
+    }
+
+    if (fundRequest.status !== "Released") {
+        throw new ApiError(400, "You can only resolve a ticket after funds have been released by the admin");
+    }
+
+    if (fundRequest.isResolved) {
+        throw new ApiError(400, "This ticket is already resolved");
+    }
+
+    fundRequest.isResolved = true;
+    fundRequest.resolvedAt = new Date();
+    await fundRequest.save();
+
+    return res.status(200).json(
+        new ApiResponse(200, "Fund request ticket resolved successfully", fundRequest)
+    );
+});
+
+
