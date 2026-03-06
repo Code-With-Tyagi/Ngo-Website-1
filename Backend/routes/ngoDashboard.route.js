@@ -13,6 +13,11 @@ import {
     updateVolunteerStatus,
     getNgoStatus
 } from "../controllers/ngoDashboard.controller.js";
+import {
+    requestNgoFunds,
+    getMyFundRequests,
+    resolveFundTicket
+} from "../controllers/ngo.controller.js";
 
 const router = express.Router();
 
@@ -74,5 +79,10 @@ router.delete("/gallery/:id", requireNgoAuth, deleteGalleryItem);
 // Volunteers
 router.get("/volunteers", requireNgoAuth, getNgoVolunteers);
 router.put("/volunteers/:id", requireNgoAuth, updateVolunteerStatus);
+
+// Fund Requests
+router.post("/funds/request", requireNgoAuth, requestNgoFunds);
+router.get("/funds", requireNgoAuth, getMyFundRequests);
+router.put("/funds/:id/resolve", requireNgoAuth, resolveFundTicket);
 
 export default router;

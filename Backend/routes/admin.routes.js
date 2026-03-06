@@ -13,7 +13,9 @@ import {
     getAllContacts,
     updateContactStatus,
     deleteContact,
-    getAllUsers
+    getAllUsers,
+    getAllFundRequests,
+    updateFundRequestStatus
 } from "../controllers/admin.controller.js";
 
 const router = express.Router();
@@ -44,5 +46,9 @@ router.delete("/contacts/:id", deleteContact);
 
 // User management
 router.get("/users", getAllUsers);
+
+// Fund request management
+router.get("/funds", getAllFundRequests);
+router.put("/funds/:id/status", updateFundRequestStatus);
 
 export default router;
